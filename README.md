@@ -1,4 +1,4 @@
-# QuikGit 🚀
+# QuikGit
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/lvcasx1/quikgit)](https://golang.org/)
 [![Release](https://img.shields.io/github/v/release/lvcasx1/quikgit)](https://github.com/lvcasx1/quikgit/releases)
@@ -9,40 +9,40 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 
 ![QuikGit Demo](docs/images/demo.gif)
 
-## ✨ Features
+## Features
 
-### 🔐 **Seamless Authentication**
+### **Seamless Authentication**
 - **QR Code Login**: Authenticate with GitHub using a QR code
 - **Secure Token Management**: Safely store and manage access tokens
 - **Session Persistence**: Stay logged in between sessions
 
-### 🔍 **Powerful Repository Discovery**
+### **Powerful Repository Discovery**
 - **Advanced Search**: Search by name, language, topics, and more
 - **Smart Filtering**: Filter by user, organization, or specific criteria  
 - **Real-time Results**: Instant search with pagination support
 - **Rich Information**: View stars, forks, languages, and last updated
 
-### 📦 **Efficient Multi-Repository Cloning**
+### **Efficient Multi-Repository Cloning**
 - **Parallel Processing**: Clone multiple repositories simultaneously
 - **Real-time Progress**: Live progress tracking with goroutines and channels
 - **Smart Conflict Handling**: Handle existing directories gracefully
 - **SSH & HTTPS Support**: Choose your preferred cloning method
 - **Fixed Progress Issues**: Resolved async progress bar problems from Bubbletea version
 
-### 🛠️ **Automatic Dependency Installation**
+### **Automatic Dependency Installation**
 - **Language Detection**: Automatically detect project types
 - **Smart Installation**: Run appropriate dependency managers
 - **Concurrent Processing**: Install dependencies for multiple projects
 - **Error Handling**: Continue processing even if some installations fail
 
-### 🎨 **Beautiful Terminal Interface**
+### **Beautiful Terminal Interface**
 - **Responsive Design**: Adapts to different terminal sizes with centered layouts
 - **Mouse Support**: Full mouse interaction support
 - **Keyboard Navigation**: Comprehensive keyboard shortcuts
 - **Nerd Font Icons**: Beautiful icons for better visual experience
 - **TView Framework**: Modern, efficient terminal UI framework
 
-### 📋 **Supported Project Types**
+### **Supported Project Types**
 
 | Language | Files | Commands |
 |----------|-------|----------|
@@ -58,7 +58,9 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 | **Swift** | `Package.swift` | `swift build` |
 | **Dart** | `pubspec.yaml` | `flutter pub get` |
 
-## 🚀 Installation
+## Installation
+
+QuikGit is available through multiple package managers and platforms for easy installation:
 
 ### macOS (Homebrew)
 
@@ -67,62 +69,98 @@ brew tap lvcasx1/tap
 brew install quikgit
 ```
 
-### Arch Linux (AUR)
+### Linux
 
+#### Arch Linux (AUR)
 ```bash
 # Using yay
-yay -S quikgit
+yay -S quikgit-bin
 
-# Using paru
-paru -S quikgit
+# Using paru  
+paru -S quikgit-bin
 
-# Manual
-git clone https://aur.archlinux.org/quikgit.git
-cd quikgit
+# Manual AUR installation
+git clone https://aur.archlinux.org/quikgit-bin.git
+cd quikgit-bin
 makepkg -si
 ```
 
-### Ubuntu/Debian (.deb package)
-
+#### Ubuntu/Debian (.deb packages)
 ```bash
-# Download the .deb package from releases
-wget https://github.com/lvcasx1/quikgit/releases/download/v1.0.0/quikgit_1.0.0_amd64.deb
-sudo dpkg -i quikgit_1.0.0_amd64.deb
+# Download and install DEB package
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit_linux_amd64.deb
+sudo dpkg -i quikgit_linux_amd64.deb
+
+# For ARM64 systems
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit_linux_arm64.deb
+sudo dpkg -i quikgit_linux_arm64.deb
 
 # Install dependencies if needed
 sudo apt-get install -f
 ```
 
-### Manual Installation
+#### Red Hat/Fedora/CentOS (.rpm packages)
+```bash
+# Download and install RPM package
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit_linux_amd64.rpm
+sudo rpm -i quikgit_linux_amd64.rpm
 
-1. Download the latest release for your platform:
-   ```bash
-   curl -LO https://github.com/lvcasx1/quikgit/releases/download/v1.0.0/quikgit-1.0.0-linux-amd64.tar.gz
-   ```
+# Or using dnf/yum
+sudo dnf install https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit_linux_amd64.rpm
+```
 
-2. Extract and install:
-   ```bash
-   tar -xzf quikgit-1.0.0-linux-amd64.tar.gz
-   sudo mv quikgit-1.0.0-linux-amd64 /usr/local/bin/quikgit
-   sudo chmod +x /usr/local/bin/quikgit
-   ```
-
-### Build from Source
+### Docker
 
 ```bash
+# Run QuikGit in a container
+docker run -it --rm -v $(pwd):/workspace ghcr.io/lvcasx1/quikgit:latest
+
+# Pull specific version
+docker pull ghcr.io/lvcasx1/quikgit:v1.0.0
+```
+
+### Manual Installation
+
+#### Binary Download
+```bash
+# Linux AMD64
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit-linux-amd64.tar.gz
+tar -xzf quikgit-linux-amd64.tar.gz
+sudo mv quikgit /usr/local/bin/
+
+# macOS AMD64
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit-darwin-amd64.tar.gz
+tar -xzf quikgit-darwin-amd64.tar.gz
+sudo mv quikgit /usr/local/bin/
+
+# macOS ARM64 (Apple Silicon)
+curl -LO https://github.com/lvcasx1/quikgit/releases/latest/download/quikgit-darwin-arm64.tar.gz
+tar -xzf quikgit-darwin-arm64.tar.gz
+sudo mv quikgit /usr/local/bin/
+
+# Windows (download .zip from releases page)
+```
+
+#### Build from Source
+```bash
+# Requires Go 1.21+
 git clone https://github.com/lvcasx1/quikgit.git
 cd quikgit
 go build -o quikgit ./cmd/quikgit
 sudo mv quikgit /usr/local/bin/
 ```
 
-### Docker
+### Available Platforms
 
-```bash
-docker run -it --rm -v $(pwd):/workspace ghcr.io/lvcasx1/quikgit:latest
-```
+| Platform | Architecture | Package Format | Status |
+|----------|-------------|----------------|---------|
+| **Linux** | AMD64, ARM64 | `.tar.gz`, `.deb`, `.rpm` | ✅ |
+| **macOS** | AMD64, ARM64 | `.tar.gz`, Homebrew | ✅ |
+| **Windows** | AMD64, ARM64 | `.zip` | ✅ |
+| **Docker** | Multi-arch | Container | ✅ |
+| **Arch Linux** | AMD64, ARM64 | AUR Package | ✅ |
 
-## 🎯 Quick Start
+## Quick Start
 
 ### Step 1: Authentication Setup (One-time)
 
@@ -156,7 +194,7 @@ quikgit
 2. **Search Repositories**: Use the search interface to find repositories  
 3. **Select and Clone**: Choose repositories and let QuikGit handle cloning and setup
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 ### Global
 - `q` / `Ctrl+C`: Quit application
@@ -180,7 +218,7 @@ quikgit
 - `d`: Toggle detailed output view
 - `Ctrl+C`: Cancel ongoing operations
 
-## 🛠️ Configuration
+## Configuration
 
 QuikGit stores configuration in `~/.quikgit/config.yaml`:
 
@@ -224,7 +262,7 @@ defaults:
 - `QUIKGIT_DEBUG`: Enable debug logging
 - `GITHUB_TOKEN`: Pre-set GitHub personal access token
 
-## 📚 Usage Examples
+## Usage Examples
 
 ### Basic Repository Search
 ```bash
@@ -250,11 +288,12 @@ quikgit --debug
 quikgit --help
 ```
 
-## 🔧 Development
+## Development
 
 ### Prerequisites
 - Go 1.21 or later
 - Git
+- [GoReleaser](https://goreleaser.com/install/) (for releases)
 - Make (optional)
 
 ### Building
@@ -267,7 +306,7 @@ cd quikgit
 # Install dependencies
 go mod download
 
-# Build
+# Build for current platform
 make build
 # or
 go build -o quikgit ./cmd/quikgit
@@ -277,8 +316,10 @@ make test
 # or
 go test ./...
 
-# Build for all platforms
+# Build for all platforms using GoReleaser
 make cross-compile
+# or
+goreleaser build --snapshot --clean
 ```
 
 ### Development Workflow
@@ -303,22 +344,79 @@ make dev
 make run-dev
 ```
 
-## 📄 License
+### Release Process
+
+The project uses **GoReleaser** for automated cross-platform releases:
+
+```bash
+# Create and push a version tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# Release using build script (recommended)
+./scripts/build.sh release
+
+# Or use GoReleaser directly
+goreleaser release
+
+# Local test release (no publishing)
+goreleaser release --snapshot --clean --skip=publish
+```
+
+#### What Gets Released Automatically:
+- ✅ **GitHub Releases** with binaries and checksums
+- ✅ **Homebrew Formula** (updates `lvcasx1/homebrew-tap`)
+- ✅ **Docker Images** (multi-arch to `ghcr.io/lvcasx1/quikgit`)
+- ✅ **Linux Packages** (`.deb`, `.rpm` for AMD64/ARM64)
+- ✅ **AUR Package** (auto-published to `aur.archlinux.org`)
+
+#### Environment Setup for Releases:
+```bash
+# Required for GitHub releases
+export GITHUB_TOKEN="ghp_your_token_here"
+
+# Optional: AUR auto-publishing  
+export AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_rsa)"
+
+# Optional: Custom APT repository
+export APT_REPO_URL="https://apt.yourrepo.com"
+export APT_REPO_KEY="your_apt_signing_key"
+```
+
+### Build Scripts
+
+```bash
+# Modern release workflow (uses GoReleaser)
+./scripts/build.sh release
+
+# Legacy build process (deprecated)
+./scripts/build.sh legacy-release
+
+# Test GoReleaser configuration
+./scripts/build.sh goreleaser
+
+# Individual commands
+./scripts/build.sh clean    # Clean build artifacts
+./scripts/build.sh test     # Run tests
+./scripts/build.sh build    # Build using GoReleaser
+```
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Ways to Contribute
-- 🐛 Report bugs
-- 💡 Request features
-- 📝 Improve documentation
-- 🔧 Submit pull requests
-- ⭐ Star the repository
+- Report bugs
+- Request features
+- Improve documentation
+- Submit pull requests
+- Star the repository
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 QuikGit is built with amazing open-source libraries:
 
@@ -328,14 +426,14 @@ QuikGit is built with amazing open-source libraries:
 - [go-git](https://github.com/go-git/go-git) - Pure Go Git implementation
 - [Nerd Fonts](https://nerdfonts.com/) - Icon fonts for terminals
 
-## 📊 Statistics
+## Statistics
 
 - **Languages Supported**: 15+
 - **Package Managers**: 10+
 - **Platforms**: Linux, macOS, Windows
 - **Architectures**: AMD64, ARM64
 
-## 🔮 Roadmap
+## Roadmap
 
 - [x] **Framework Migration**: Successfully migrated from Bubbletea to TView for better performance
 - [x] **Progress Bar Fix**: Resolved async issues with real-time progress tracking  
@@ -350,14 +448,14 @@ QuikGit is built with amazing open-source libraries:
 - [ ] Shell completion
 - [ ] Man page documentation
 
-## 🆘 Support
+## Support
 
-- 📖 [Documentation](https://github.com/lvcasx1/quikgit/wiki)
-- 🐛 [Issue Tracker](https://github.com/lvcasx1/quikgit/issues)
-- 💬 [Discussions](https://github.com/lvcasx1/quikgit/discussions)
-- 📧 Email: support@quikgit.dev
+- [Documentation](https://github.com/lvcasx1/quikgit/wiki)
+- [Issue Tracker](https://github.com/lvcasx1/quikgit/issues)
+- [Discussions](https://github.com/lvcasx1/quikgit/discussions)
+- Email: support@quikgit.dev
 
-## 📈 Metrics
+## Metrics
 
 ![GitHub stars](https://img.shields.io/github/stars/lvcasx1/quikgit?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/lvcasx1/quikgit?style=social)
@@ -366,6 +464,6 @@ QuikGit is built with amazing open-source libraries:
 
 ---
 
-**Made with ❤️ by the QuikGit Team**
+**Made with love by the QuikGit Team**
 
 *Streamline your GitHub workflow, one repository at a time.*

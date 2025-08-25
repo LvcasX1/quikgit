@@ -141,58 +141,128 @@ build_platform() {
     log_success "Built $os/$arch: $output_file"
 }
 
-# Cross-compile for all platforms
+# Cross-compile for all platforms using GoReleaser
 cross_compile() {
-    log_info "Starting cross-compilation..."
-    mkdir -p "$DIST_DIR"
+    log_info "Starting cross-compilation with GoReleaser..."
     
-    # Define platforms
-    local platforms=(
-        "linux/amd64"
-        "linux/arm64"
-        "darwin/amd64"
-        "darwin/arm64"
-        "windows/amd64"
-        "windows/arm64"
-    )
+    # Check if GoReleaser is installed
+    if ! command -v goreleaser &> /dev/null; then
+        log_error "GoReleaser is not installed. Please install it first:"
+        log_info "  macOS: brew install goreleaser"
+        log_info "  Linux: See https://goreleaser.com/install"
+        exit 1
+    fi
     
-    for platform in "${platforms[@]}"; do
-        IFS='/' read -r os arch <<< "$platform"
-        build_platform "$os" "$arch" "$DIST_DIR"
-    done
-    
-    log_success "Cross-compilation complete"
+    # Use GoReleaser for cross-compilation (snapshot mode for local builds)
+    if goreleaser build --snapshot --clean; then
+        log_success "GoReleaser cross-compilation complete"
+    else
+        log_error "GoReleaser build failed"
+        exit 1
+    fi
 }
 
-# Package releases
+# Package releases using GoReleaser
 package_releases() {
-    log_info "Packaging releases..."
+    log_info "Packaging releases with GoReleaser..."
     
-    cd "$DIST_DIR"
+    # Check if GoReleaser is installed
+    if ! command -v goreleaser &> /dev/null; then
+        log_error "GoReleaser is not installed. Please install it first:"
+        log_info "  macOS: brew install goreleaser"
+        log_info "  Linux: See https://goreleaser.com/install"
+        exit 1
+    fi
     
-    for file in ${APP_NAME}-${VERSION}-*; do
-        if [[ "$file" == *"windows"* ]]; then
-            log_info "Creating ZIP for $file"
-            zip "${file}.zip" "$file"
-        else
-            log_info "Creating TAR.GZ for $file"
-            tar -czf "${file}.tar.gz" "$file"
-        fi
-    done
+    # Check if Docker is available
+    local skip_docker=""
+    if ! command -v docker &> /dev/null || ! docker info &>/dev/null; then
+        log_warning "Docker not available. Skipping Docker builds..."
+        skip_docker="--skip=docker"
+    fi
     
-    cd ..
-    log_success "Packaging complete"
+    # Use GoReleaser for packaging (snapshot mode for local packaging)
+    if goreleaser release --snapshot --clean --skip=publish $skip_docker; then
+        log_success "GoReleaser packaging complete"
+    else
+        log_error "GoReleaser packaging failed"
+        exit 1
+    fi
 }
 
-# Generate checksums
+# Generate checksums (now handled by GoReleaser)
 generate_checksums() {
-    log_info "Generating checksums..."
-    
-    cd "$DIST_DIR"
-    sha256sum *.tar.gz *.zip > checksums.sha256
-    cd ..
-    
+    log_info "Checksums are now generated automatically by GoReleaser"
     log_success "Checksums generated"
+}
+
+# GoReleaser full release (publishes to GitHub)
+goreleaser_release() {
+    log_info "Starting GoReleaser full release..."
+    
+    # Check if GoReleaser is installed
+    if ! command -v goreleaser &> /dev/null; then
+        log_error "GoReleaser is not installed. Please install it first:"
+        log_info "  macOS: brew install goreleaser"
+        log_info "  Linux: See https://goreleaser.com/install"
+        exit 1
+    fi
+    
+    # Check for GITHUB_TOKEN
+    if [ -z "$GITHUB_TOKEN" ]; then
+        log_warning "GITHUB_TOKEN not set. GoReleaser will skip GitHub release creation."
+        log_info "To set up GitHub token:"
+        log_info "  1. Go to GitHub → Settings → Developer settings → Personal access tokens"
+        log_info "  2. Create token with 'repo' and 'write:packages' permissions"
+        log_info "  3. Export it: export GITHUB_TOKEN=\"your_token_here\""
+    fi
+    
+    # Check for optional Linux packaging credentials
+    if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+        log_info "AUR_SSH_PRIVATE_KEY not set. AUR publishing will be skipped."
+        log_info "To enable AUR publishing:"
+        log_info "  1. Set up AUR account and SSH key"
+        log_info "  2. Export key: export AUR_SSH_PRIVATE_KEY=\"\$(cat ~/.ssh/aur_rsa)\""
+    else
+        log_info "AUR publishing enabled"
+    fi
+    
+    # Check for APT repository setup
+    if [ -n "$APT_REPO_URL" ] && [ -n "$APT_REPO_KEY" ]; then
+        log_info "APT repository publishing enabled: $APT_REPO_URL"
+    else
+        log_info "APT repository publishing disabled (APT_REPO_URL/APT_REPO_KEY not set)"
+    fi
+    
+    # Check if Docker is available
+    local skip_docker=""
+    if ! command -v docker &> /dev/null || ! docker info &>/dev/null; then
+        log_warning "Docker not available. Skipping Docker builds..."
+        skip_docker="--skip=docker"
+    fi
+    
+    # Check if we're on a tagged commit
+    if ! git describe --tags --exact-match HEAD &>/dev/null; then
+        log_warning "No tag found on current commit. Creating snapshot release..."
+        if goreleaser release --snapshot --clean --skip=publish $skip_docker; then
+            log_success "GoReleaser snapshot release complete (local only)"
+            log_info "To create a full release:"
+            log_info "  1. Create and push a tag: git tag v1.0.0 && git push origin v1.0.0"
+            log_info "  2. Run: goreleaser release"
+        else
+            log_error "GoReleaser snapshot release failed"
+            exit 1
+        fi
+    else
+        # Full release with tag
+        if goreleaser release $skip_docker; then
+            log_success "GoReleaser full release complete"
+            log_info "Release published to GitHub with all artifacts"
+        else
+            log_error "GoReleaser release failed"
+            exit 1
+        fi
+    fi
 }
 
 # Create Homebrew formula
@@ -395,7 +465,19 @@ main() {
             build_docker
             ;;
         "all"|"release")
-            log_info "Starting full build process for QuikGit v$VERSION"
+            log_info "Starting full release process for QuikGit v$VERSION"
+            check_dependencies
+            clean_build
+            install_deps
+            format_code
+            lint_code
+            run_tests
+            goreleaser_release
+            display_summary
+            ;;
+        "legacy-release")
+            log_info "Starting legacy build process for QuikGit v$VERSION"
+            log_warning "This is the old release process. Consider using 'release' with GoReleaser instead."
             check_dependencies
             clean_build
             install_deps
@@ -411,6 +493,9 @@ main() {
             generate_release_notes
             display_summary
             ;;
+        "goreleaser")
+            goreleaser_release
+            ;;
         "help"|"-h"|"--help")
             cat << EOF
 QuikGit Build Script
@@ -418,20 +503,46 @@ QuikGit Build Script
 Usage: $0 [command]
 
 Commands:
-  deps        Install dependencies
-  clean       Clean build artifacts
-  format      Format source code
-  lint        Lint source code
-  test        Run tests
-  build       Cross-compile for all platforms
-  package     Package releases
-  docker      Build Docker image
-  all         Run complete build process (default)
-  release     Alias for 'all'
-  help        Show this help message
+  deps            Install dependencies
+  clean           Clean build artifacts
+  format          Format source code
+  lint            Lint source code
+  test            Run tests
+  build           Cross-compile for all platforms (uses GoReleaser)
+  package         Package releases (uses GoReleaser)
+  docker          Build Docker image
+  goreleaser      Run GoReleaser release (smart: snapshot if no tag, full release if tagged)
+  all             Run complete release process using GoReleaser (default)
+  release         Alias for 'all' - uses GoReleaser for modern release workflow
+  legacy-release  Run old build process (without GoReleaser)
+  help            Show this help message
+
+Modern Workflow (Recommended):
+  ./scripts/build.sh release        # Uses GoReleaser, creates GitHub release if tagged
+
+Legacy Workflow (Deprecated):
+  ./scripts/build.sh legacy-release # Uses old build process
 
 Environment variables:
-  VERSION     Set build version (default: 1.0.0)
+  VERSION       Set build version (default: 1.0.0)
+  GITHUB_TOKEN  GitHub token for releases (required for publishing)
+
+Setup Environment Variables:
+  export GITHUB_TOKEN="ghp_your_token_here"              # Required for GitHub releases
+  export AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_rsa)"     # Optional: for AUR publishing
+  export APT_REPO_URL="https://apt.yourrepo.com"         # Optional: for APT publishing
+  export APT_REPO_KEY="your_apt_signing_key"             # Optional: for APT publishing
+
+Release Process:
+  1. git tag v1.0.0 && git push origin v1.0.0
+  2. ./scripts/build.sh release
+
+What Gets Published Automatically:
+  ✅ GitHub Releases (with binaries, archives, checksums)
+  ✅ Homebrew Formula (to lvcasx1/homebrew-tap)  
+  ✅ Docker Images (to ghcr.io/lvcasx1/quikgit)
+  ✅ DEB/RPM Packages (generated, ready for distribution)
+  ✅ AUR Package (published to aur.archlinux.org if AUR_SSH_PRIVATE_KEY set)
 EOF
             ;;
         *)

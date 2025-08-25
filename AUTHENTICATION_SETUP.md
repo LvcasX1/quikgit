@@ -2,7 +2,7 @@
 
 QuikGit works out of the box with GitHub authentication! Simply launch the application and authenticate with the QR code.
 
-## 🚀 Out-of-the-Box Authentication (Recommended)
+## Out-of-the-Box Authentication (Recommended)
 
 **No setup required!** QuikGit includes built-in GitHub OAuth authentication:
 
