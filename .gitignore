@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-quikgit
+/quikgit
 quikgit.exe
 
 # Test binary, built with `go test -c`
@@ -36,6 +36,7 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
