@@ -1,0 +1,147 @@
+# Maintainer: QuikGit Team <maintainer@quikgit.dev>
+
+pkgname=quikgit
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="GitHub repository manager TUI - streamline repository discovery, cloning, and dependency installation"
+arch=('x86_64' 'aarch64')
+url="https://github.com/lvcasx1/quikgit"
+license=('MIT')
+depends=('glibc' 'git')
+makedepends=('go' 'git')
+optdepends=(
+    'github-cli: Enhanced GitHub integration'
+    'nodejs: Node.js project support'
+    'npm: Node.js package management'
+    'yarn: Alternative Node.js package manager'
+    'python: Python project support'
+    'python-pip: Python package management'
+    'pipenv: Python virtual environments'
+    'poetry: Python dependency management'
+    'ruby: Ruby project support'
+    'bundler: Ruby gem management'
+    'rust: Rust project support'
+    'cargo: Rust package manager'
+    'jdk-openjdk: Java project support'
+    'maven: Java build automation'
+    'gradle: Alternative Java build tool'
+    'php: PHP project support'
+    'composer: PHP dependency management'
+    'dotnet-runtime: .NET project support'
+    'cmake: C++ build system'
+    'make: Build automation'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')  # This will be updated during packaging
+backup=('etc/quikgit/config.yaml')
+install=quikgit.install
+
+prepare() {
+    cd "$pkgname-$pkgver"
+    
+    # Create build directory
+    mkdir -p build
+    
+    # Ensure Go modules are ready
+    go mod download
+    go mod verify
+}
+
+build() {
+    cd "$pkgname-$pkgver"
+    
+    export CGO_ENABLED=0
+    export GOFLAGS="-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw"
+    
+    go build \
+        -ldflags "-X main.version=$pkgver -s -w -extldflags '$LDFLAGS'" \
+        -o build/$pkgname \
+        ./cmd/quikgit
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+    
+    # Run tests
+    go test -v ./...
+    
+    # Verify binary works
+    ./build/$pkgname --version
+    ./build/$pkgname --help
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+    
+    # Install binary
+    install -Dm755 "build/$pkgname" "$pkgdir/usr/bin/$pkgname"
+    
+    # Install license
+    install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    
+    # Install documentation
+    install -Dm644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+    
+    # Install man page (if available)
+    # install -Dm644 "docs/$pkgname.1" "$pkgdir/usr/share/man/man1/$pkgname.1"
+    
+    # Install shell completions (if available)
+    # install -Dm644 "completions/bash/$pkgname" "$pkgdir/usr/share/bash-completion/completions/$pkgname"
+    # install -Dm644 "completions/zsh/_$pkgname" "$pkgdir/usr/share/zsh/site-functions/_$pkgname"
+    # install -Dm644 "completions/fish/$pkgname.fish" "$pkgdir/usr/share/fish/completions/$pkgname.fish"
+    
+    # Install default configuration
+    install -Dm644 /dev/stdin "$pkgdir/etc/$pkgname/config.yaml" << EOF
+# QuikGit Configuration
+# This file is installed by the package but you should customize it
+# in ~/.quikgit/config.yaml
+
+github:
+  prefer_ssh: false
+  # ssh_key_path: ~/.ssh/id_rsa
+  # default_user: ""
+  # default_org: ""
+
+clone:
+  concurrent: 3
+  use_current_dir: true
+  create_subdirs: false
+  # default_path: ~/projects
+
+install:
+  enabled: true
+  concurrent: 3
+  timeout_minutes: 10
+  skip_on_error: false
+  auto_install: true
+
+ui:
+  theme: default
+  show_icons: true
+  animations_speed: normal
+  mouse_support: true
+  show_line_numbers: false
+
+defaults:
+  search_sort: stars
+  search_order: desc
+  results_per_page: 30
+  preferred_auth: https
+EOF
+    
+    # Install systemd user service (optional)
+    # install -Dm644 /dev/stdin "$pkgdir/usr/lib/systemd/user/$pkgname.service" << EOF
+    # [Unit]
+    # Description=QuikGit Background Service
+    # After=network.target
+    # 
+    # [Service]
+    # Type=simple
+    # ExecStart=/usr/bin/$pkgname daemon
+    # Restart=always
+    # RestartSec=5
+    # 
+    # [Install]
+    # WantedBy=default.target
+    # EOF
+}

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# QuikGit AUR package install script
+
+post_install() {
+    echo "QuikGit has been installed successfully!"
+    echo ""
+    echo "Getting Started:"
+    echo "1. Run 'quikgit' to start the application"
+    echo "2. You'll be prompted to authenticate with GitHub via QR code"
+    echo "3. Use the TUI to search, clone, and manage repositories"
+    echo ""
+    echo "Configuration:"
+    echo "- Global config: /etc/quikgit/config.yaml"
+    echo "- User config: ~/.quikgit/config.yaml"
+    echo "- Authentication token: ~/.quikgit/token"
+    echo ""
+    echo "For help and documentation, visit:"
+    echo "https://github.com/lvcasx1/quikgit"
+    echo ""
+    echo "Optional dependencies for full functionality:"
+    echo "- nodejs, npm, yarn: Node.js project support"
+    echo "- python, python-pip, pipenv, poetry: Python project support"
+    echo "- ruby, bundler: Ruby project support"
+    echo "- rust, cargo: Rust project support"
+    echo "- jdk-openjdk, maven, gradle: Java project support"
+    echo "- php, composer: PHP project support"
+    echo "- dotnet-runtime: .NET project support"
+    echo "- cmake, make: C++ project support"
+}
+
+post_upgrade() {
+    echo "QuikGit has been upgraded!"
+    echo ""
+    echo "Changes in this version:"
+    echo "- Check the release notes at: https://github.com/lvcasx1/quikgit/releases"
+    echo ""
+    echo "If you experience any issues after upgrading:"
+    echo "1. Check your configuration: ~/.quikgit/config.yaml"
+    echo "2. Clear cache: rm -rf ~/.cache/quikgit/"
+    echo "3. Re-authenticate if needed: rm ~/.quikgit/token && quikgit"
+}
+
+pre_remove() {
+    echo "Removing QuikGit..."
+    echo ""
+    echo "Your configuration and authentication tokens will be preserved"
+    echo "in ~/.quikgit/ for future installations."
+    echo ""
+    echo "To completely remove all QuikGit data:"
+    echo "rm -rf ~/.quikgit/"
+}
+
+post_remove() {
+    echo "QuikGit has been removed."
+    echo ""
+    echo "Your personal configuration and tokens are still available at:"
+    echo "~/.quikgit/"
+    echo ""
+    echo "To completely remove all data:"
+    echo "rm -rf ~/.quikgit/"
+    echo ""
+    echo "Thank you for using QuikGit!"
+}
