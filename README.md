@@ -24,9 +24,10 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 
 ### 📦 **Efficient Multi-Repository Cloning**
 - **Parallel Processing**: Clone multiple repositories simultaneously
-- **Progress Tracking**: Real-time progress with animated progress bars
+- **Real-time Progress**: Live progress tracking with goroutines and channels
 - **Smart Conflict Handling**: Handle existing directories gracefully
 - **SSH & HTTPS Support**: Choose your preferred cloning method
+- **Fixed Progress Issues**: Resolved async progress bar problems from Bubbletea version
 
 ### 🛠️ **Automatic Dependency Installation**
 - **Language Detection**: Automatically detect project types
@@ -35,11 +36,11 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 - **Error Handling**: Continue processing even if some installations fail
 
 ### 🎨 **Beautiful Terminal Interface**
-- **Responsive Design**: Adapts to different terminal sizes
+- **Responsive Design**: Adapts to different terminal sizes with centered layouts
 - **Mouse Support**: Full mouse interaction support
 - **Keyboard Navigation**: Comprehensive keyboard shortcuts
-- **Animated Transitions**: Smooth animations using Harmonica
-- **Customizable Themes**: Multiple color schemes
+- **Nerd Font Icons**: Beautiful icons for better visual experience
+- **TView Framework**: Modern, efficient terminal UI framework
 
 ### 📋 **Supported Project Types**
 
@@ -321,13 +322,11 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 QuikGit is built with amazing open-source libraries:
 
-- [Bubble Tea](https://github.com/charmbracelet/bubbletea) - TUI framework
-- [Bubbles](https://github.com/charmbracelet/bubbles) - TUI components
-- [Lip Gloss](https://github.com/charmbracelet/lipgloss) - Styling
-- [Harmonica](https://github.com/charmbracelet/harmonica) - Animations
+- [TView](https://github.com/rivo/tview) - Modern TUI framework  
+- [Tcell](https://github.com/gdamore/tcell) - Terminal cell interface
 - [go-github](https://github.com/google/go-github) - GitHub API client
-- [go-git](https://github.com/go-git/go-git) - Git implementation
-- [BubbleZone](https://github.com/lrstanley/bubblezone) - Mouse support
+- [go-git](https://github.com/go-git/go-git) - Pure Go Git implementation
+- [Nerd Fonts](https://nerdfonts.com/) - Icon fonts for terminals
 
 ## 📊 Statistics
 
@@ -338,6 +337,10 @@ QuikGit is built with amazing open-source libraries:
 
 ## 🔮 Roadmap
 
+- [x] **Framework Migration**: Successfully migrated from Bubbletea to TView for better performance
+- [x] **Progress Bar Fix**: Resolved async issues with real-time progress tracking  
+- [x] **Icon System**: Replaced all emojis with Nerd Font icons for better compatibility
+- [x] **Centered UI**: Implemented proper centered layouts with left-justified options
 - [ ] GitHub Enterprise support
 - [ ] GitLab and Bitbucket integration
 - [ ] Custom project templates

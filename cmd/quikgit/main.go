@@ -6,9 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/charmbracelet/bubbletea"
-	"github.com/lvcasx1/quikgit/internal/ui/models"
 	"github.com/lvcasx1/quikgit/pkg/config"
+	"github.com/lvcasx1/quikgit/internal/ui/bubbletea"
 )
 
 const (
@@ -59,21 +58,9 @@ func main() {
 		log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	}
 
-	// Initialize the application
-	app := models.NewApp(cfg)
-
-	// Configure Bubble Tea program
-	program := tea.NewProgram(
-		app,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-
-	// Handle cleanup on exit
-	defer app.Cleanup()
-
-	// Run the program
-	if _, err := program.Run(); err != nil {
+	// Initialize and run the Bubble Tea application
+	app := bubbletea.NewApplication(cfg)
+	if err := app.Run(); err != nil {
 		log.Fatalf("Failed to run application: %v", err)
 	}
 }

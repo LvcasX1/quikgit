@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -156,6 +155,10 @@ func (a *AuthManager) GetClient() *github.Client {
 	return a.client
 }
 
+func (a *AuthManager) GetToken() string {
+	return a.token
+}
+
 func (a *AuthManager) IsAuthenticated() bool {
 	if a.client == nil {
 		return false
@@ -228,10 +231,4 @@ func (a *AuthManager) LoadToken() error {
 
 	a.SetToken(string(token))
 	return nil
-}
-
-func generateRandomState() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return base64.URLEncoding.EncodeToString(b)
 }

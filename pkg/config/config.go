@@ -59,6 +59,7 @@ var DefaultConfig = Config{
 		PreferSSH: false,
 	},
 	Clone: CloneConfig{
+		DefaultPath:   ".",
 		Concurrent:    3,
 		UseCurrentDir: true,
 		CreateSubdirs: false,

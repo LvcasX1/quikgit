@@ -22,11 +22,12 @@ type CloneProgress struct {
 }
 
 type CloneManager struct {
-	token     string
-	sshKey    string
-	targetDir string
-	progress  chan CloneProgress
-	wg        sync.WaitGroup
+	token         string
+	sshKey        string
+	targetDir     string
+	progress      chan CloneProgress
+	wg            sync.WaitGroup
+	createSubdirs bool
 }
 
 func NewCloneManager(token, targetDir string) *CloneManager {
@@ -35,10 +36,16 @@ func NewCloneManager(token, targetDir string) *CloneManager {
 	}
 
 	return &CloneManager{
-		token:     token,
-		targetDir: targetDir,
-		progress:  make(chan CloneProgress, 100),
+		token:         token,
+		targetDir:     targetDir,
+		progress:      make(chan CloneProgress, 100),
+		createSubdirs: false, // Default to false, can be set with SetCreateSubdirs
 	}
+}
+
+// SetCreateSubdirs configures whether to create subdirectories organized by owner
+func (cm *CloneManager) SetCreateSubdirs(createSubdirs bool) {
+	cm.createSubdirs = createSubdirs
 }
 
 func (cm *CloneManager) SetSSHKey(keyPath string) {
@@ -88,12 +95,28 @@ func (cm *CloneManager) cloneWorker(ctx context.Context, repo *Repository) {
 
 	cm.sendProgress(progress)
 
-	targetPath := filepath.Join(cm.targetDir, repo.Name)
+	// Determine target path based on configuration
+	var targetPath string
+	if cm.createSubdirs {
+		// Create subdirectory structure: targetDir/owner/repo
+		ownerDir := filepath.Join(cm.targetDir, repo.Owner)
+		if err := os.MkdirAll(ownerDir, 0755); err != nil {
+			progress.Status = "Failed to create owner directory"
+			progress.Error = fmt.Errorf("failed to create directory %s: %w", ownerDir, err)
+			progress.Completed = true
+			cm.sendProgress(progress)
+			return
+		}
+		targetPath = filepath.Join(ownerDir, repo.Name)
+	} else {
+		// Just use repo name in target directory
+		targetPath = filepath.Join(cm.targetDir, repo.Name)
+	}
 
 	// Check if directory already exists
 	if _, err := os.Stat(targetPath); err == nil {
 		progress.Status = "Directory exists"
-		progress.Error = fmt.Errorf("directory %s already exists", repo.Name)
+		progress.Error = fmt.Errorf("directory %s already exists", targetPath)
 		progress.Completed = true
 		cm.sendProgress(progress)
 		return
@@ -108,16 +131,16 @@ func (cm *CloneManager) cloneWorker(ctx context.Context, repo *Repository) {
 		Progress: &progressWriter{repo: repo.FullName, progress: cm.progress},
 	}
 
-	// Try SSH first if available, then HTTPS with token
-	if cm.sshKey != "" && repo.SSHURL != "" {
-		if auth, err := cm.getSSHAuth(); err == nil {
-			cloneOptions.URL = repo.SSHURL
-			cloneOptions.Auth = auth
-		}
-	} else if cm.token != "" {
+	// Prefer HTTPS with token if available, otherwise try SSH
+	if cm.token != "" {
 		cloneOptions.Auth = &http.BasicAuth{
 			Username: "token",
 			Password: cm.token,
+		}
+	} else if cm.sshKey != "" && repo.SSHURL != "" {
+		if auth, err := cm.getSSHAuth(); err == nil {
+			cloneOptions.URL = repo.SSHURL
+			cloneOptions.Auth = auth
 		}
 	}
 
@@ -244,7 +267,10 @@ func (pw *progressWriter) Write(p []byte) (n int, err error) {
 func parsePercentage(s string) int {
 	s = strings.TrimSpace(s)
 	var percent int
-	fmt.Sscanf(s, "%d", &percent)
+	_, err := fmt.Sscanf(s, "%d", &percent)
+	if err != nil {
+		return 0 // Return 0 if parsing fails
+	}
 	return percent
 }
 

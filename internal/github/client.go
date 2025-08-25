@@ -52,6 +52,13 @@ func (c *Client) SearchRepositories(ctx context.Context, opts SearchOptions) ([]
 		return nil, 0, fmt.Errorf("GitHub client not initialized")
 	}
 
+	// Add timeout if not already set
+	if ctx == context.Background() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+	}
+
 	query := buildSearchQuery(opts)
 
 	searchOpts := &github.SearchOptions{
@@ -64,7 +71,7 @@ func (c *Client) SearchRepositories(ctx context.Context, opts SearchOptions) ([]
 	}
 
 	if searchOpts.ListOptions.PerPage == 0 {
-		searchOpts.ListOptions.PerPage = 30
+		searchOpts.ListOptions.PerPage = 20 // Reduced from 30 for faster response
 	}
 
 	result, _, err := c.client.Search.Repositories(ctx, query, searchOpts)
@@ -72,10 +79,21 @@ func (c *Client) SearchRepositories(ctx context.Context, opts SearchOptions) ([]
 		return nil, 0, fmt.Errorf("failed to search repositories: %w", err)
 	}
 
-	repositories := make([]*Repository, 0, len(result.Repositories))
-	for _, repo := range result.Repositories {
-		repositories = append(repositories, convertRepository(repo))
+	// Pre-allocate with exact capacity for better performance
+	repositories := make([]*Repository, len(result.Repositories))
+	for i, repo := range result.Repositories {
+		repositories[i] = convertRepository(repo)
 	}
+
+	// Sort to prioritize private repositories
+	sort.Slice(repositories, func(i, j int) bool {
+		// Private repositories first
+		if repositories[i].Private != repositories[j].Private {
+			return repositories[i].Private
+		}
+		// Then by stars (descending)
+		return repositories[i].Stars > repositories[j].Stars
+	})
 
 	return repositories, result.GetTotal(), nil
 }
@@ -102,9 +120,20 @@ func (c *Client) GetUserRepositories(ctx context.Context, username string, page,
 	var err error
 
 	if username == "" {
-		repos, _, err = c.client.Repositories.List(ctx, "", opts)
+		// For authenticated user's repositories
+		authOpts := &github.RepositoryListByAuthenticatedUserOptions{
+			Visibility:  "all",
+			Affiliation: "owner,collaborator,organization_member",
+			Sort:        "updated",
+			ListOptions: github.ListOptions{
+				Page:    page,
+				PerPage: perPage,
+			},
+		}
+		repos, _, err = c.client.Repositories.ListByAuthenticatedUser(ctx, authOpts)
 	} else {
-		publicOpts := &github.RepositoryListOptions{
+		// For another user's public repositories
+		userOpts := &github.RepositoryListByUserOptions{
 			Type: "public",
 			Sort: "updated",
 			ListOptions: github.ListOptions{
@@ -112,7 +141,7 @@ func (c *Client) GetUserRepositories(ctx context.Context, username string, page,
 				PerPage: perPage,
 			},
 		}
-		repos, _, err = c.client.Repositories.List(ctx, username, publicOpts)
+		repos, _, err = c.client.Repositories.ListByUser(ctx, username, userOpts)
 	}
 
 	if err != nil {
@@ -123,6 +152,16 @@ func (c *Client) GetUserRepositories(ctx context.Context, username string, page,
 	for _, repo := range repos {
 		repositories = append(repositories, convertRepository(repo))
 	}
+
+	// Sort to prioritize private repositories
+	sort.Slice(repositories, func(i, j int) bool {
+		// Private repositories first
+		if repositories[i].Private != repositories[j].Private {
+			return repositories[i].Private
+		}
+		// Then by updated time (most recent first)
+		return repositories[i].UpdatedAt.After(repositories[j].UpdatedAt)
+	})
 
 	return repositories, nil
 }
@@ -155,6 +194,16 @@ func (c *Client) GetOrganizationRepositories(ctx context.Context, org string, pa
 		repositories = append(repositories, convertRepository(repo))
 	}
 
+	// Sort to prioritize private repositories
+	sort.Slice(repositories, func(i, j int) bool {
+		// Private repositories first
+		if repositories[i].Private != repositories[j].Private {
+			return repositories[i].Private
+		}
+		// Then by updated time (most recent first)
+		return repositories[i].UpdatedAt.After(repositories[j].UpdatedAt)
+	})
+
 	return repositories, nil
 }
 
@@ -169,6 +218,20 @@ func (c *Client) GetRepository(ctx context.Context, owner, repo string) (*Reposi
 	}
 
 	return convertRepository(repository), nil
+}
+
+// GetAuthenticatedUser returns information about the authenticated user
+func (c *Client) GetAuthenticatedUser(ctx context.Context) (*github.User, error) {
+	if c.client == nil {
+		return nil, fmt.Errorf("GitHub client not initialized")
+	}
+
+	user, _, err := c.client.Users.Get(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get authenticated user: %w", err)
+	}
+
+	return user, nil
 }
 
 func (c *Client) GetUserOrganizations(ctx context.Context) ([]*github.Organization, error) {

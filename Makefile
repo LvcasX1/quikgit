@@ -39,6 +39,13 @@ dev:
 	go build -race -o $(BUILD_DIR)/$(APP_NAME)-dev ./$(CMD_DIR)
 	@echo "Development build complete: $(BUILD_DIR)/$(APP_NAME)-dev"
 
+# Development build without race detector (cleaner output)
+dev-clean:
+	@echo "Building $(APP_NAME) for development (no race detector)..."
+	@mkdir -p $(BUILD_DIR)
+	go build -o $(BUILD_DIR)/$(APP_NAME)-dev-clean ./$(CMD_DIR)
+	@echo "Development build complete: $(BUILD_DIR)/$(APP_NAME)-dev-clean"
+
 # Install dependencies
 deps:
 	@echo "Installing dependencies..."
