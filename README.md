@@ -24,10 +24,10 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 
 ### **Efficient Multi-Repository Cloning**
 - **Parallel Processing**: Clone multiple repositories simultaneously
-- **Real-time Progress**: Live progress tracking with goroutines and channels
+- **Real-time Progress**: Enhanced progress tracking with Bubbletea v1+ and custom plugins
 - **Smart Conflict Handling**: Handle existing directories gracefully
 - **SSH & HTTPS Support**: Choose your preferred cloning method
-- **Fixed Progress Issues**: Resolved async progress bar problems from Bubbletea version
+- **Advanced Progress Bars**: Modern, responsive progress indicators with Bubbletea plugins
 
 ### **Automatic Dependency Installation**
 - **Language Detection**: Automatically detect project types
@@ -35,12 +35,19 @@ A powerful Terminal User Interface (TUI) for GitHub repository management that s
 - **Concurrent Processing**: Install dependencies for multiple projects
 - **Error Handling**: Continue processing even if some installations fail
 
-### **Beautiful Terminal Interface**
-- **Responsive Design**: Adapts to different terminal sizes with centered layouts
-- **Mouse Support**: Full mouse interaction support
-- **Keyboard Navigation**: Comprehensive keyboard shortcuts
-- **Nerd Font Icons**: Beautiful icons for better visual experience
-- **TView Framework**: Modern, efficient terminal UI framework
+### **Modern Terminal Interface**
+- **Responsive Design**: Adaptive layouts that scale to any terminal size
+- **Enhanced Interaction**: Full keyboard navigation with intuitive shortcuts
+- **Rich Visual Elements**: Beautiful components with smooth animations
+- **Plugin Architecture**: Extensible UI components built with Bubbletea plugins
+- **Bubbletea Framework**: Powered by the latest Bubbletea v1+ with advanced features
+
+### **Modern Architecture**
+- **Elm Architecture**: Built on The Elm Architecture pattern via Bubbletea
+- **Component-Based**: Modular UI components with Bubbles library
+- **State Management**: Predictable state updates with immutable data flow  
+- **Custom Plugins**: Extended Bubbletea with specialized components
+- **Smooth Animations**: Fluid transitions powered by Harmonica spring physics
 
 ### **Supported Project Types**
 
@@ -244,10 +251,10 @@ install:
 
 ui:
   theme: default
-  show_icons: true
-  animations_speed: normal
-  mouse_support: true
-  show_line_numbers: false
+  animations_enabled: true
+  animation_speed: normal
+  component_style: modern
+  color_scheme: adaptive
 
 defaults:
   search_sort: stars
@@ -295,6 +302,12 @@ quikgit --help
 - Git
 - [GoReleaser](https://goreleaser.com/install/) (for releases)
 - Make (optional)
+
+### Key Dependencies
+- [Bubbletea v1+](https://github.com/charmbracelet/bubbletea) - TUI framework
+- [Bubbles](https://github.com/charmbracelet/bubbles) - UI components
+- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Styling library
+- [Harmonica](https://github.com/charmbracelet/harmonica) - Animation engine
 
 ### Building
 
@@ -401,6 +414,31 @@ export APT_REPO_KEY="your_apt_signing_key"
 ./scripts/build.sh build    # Build using GoReleaser
 ```
 
+### Bubbletea Plugin Architecture
+
+QuikGit extends Bubbletea with custom plugins for enhanced functionality:
+
+#### Custom Components
+- **Enhanced Progress Bars**: Multi-stage progress tracking with animations
+- **Dynamic Tables**: Sortable, filterable repository listings
+- **Modal Dialogs**: Elegant confirmation and error dialogs
+- **Search Components**: Real-time search with auto-completion
+- **Status Indicators**: Live status updates with visual feedback
+
+#### Plugin Development
+```go
+// Example custom component using Bubbletea
+type CustomComponent struct {
+    model tea.Model
+    style lipgloss.Style
+    animation harmonica.Animation
+}
+
+func (c CustomComponent) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+    // Handle updates with Elm Architecture pattern
+}
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -420,11 +458,12 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 QuikGit is built with amazing open-source libraries:
 
-- [TView](https://github.com/rivo/tview) - Modern TUI framework  
-- [Tcell](https://github.com/gdamore/tcell) - Terminal cell interface
+- [Bubbletea](https://github.com/charmbracelet/bubbletea) - Modern TUI framework with The Elm Architecture
+- [Bubbles](https://github.com/charmbracelet/bubbles) - Common UI components for Bubbletea
+- [Lipgloss](https://github.com/charmbracelet/lipgloss) - Style definitions for terminal applications  
+- [Harmonica](https://github.com/charmbracelet/harmonica) - Spring animation library for smooth transitions
 - [go-github](https://github.com/google/go-github) - GitHub API client
 - [go-git](https://github.com/go-git/go-git) - Pure Go Git implementation
-- [Nerd Fonts](https://nerdfonts.com/) - Icon fonts for terminals
 
 ## Statistics
 
@@ -435,10 +474,9 @@ QuikGit is built with amazing open-source libraries:
 
 ## Roadmap
 
-- [x] **Framework Migration**: Successfully migrated from Bubbletea to TView for better performance
-- [x] **Progress Bar Fix**: Resolved async issues with real-time progress tracking  
-- [x] **Icon System**: Replaced all emojis with Nerd Font icons for better compatibility
-- [x] **Centered UI**: Implemented proper centered layouts with left-justified options
+- [x] **Advanced Components**: Implemented custom Bubbletea plugins for better UX
+- [x] **Progress Enhancement**: Modern progress tracking with Bubbles components and animations
+- [x] **UI/UX Improvements**: Responsive design with Lipgloss styling and Harmonica animations
 - [ ] GitHub Enterprise support
 - [ ] GitLab and Bitbucket integration
 - [ ] Custom project templates
@@ -463,7 +501,5 @@ QuikGit is built with amazing open-source libraries:
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/lvcasx1/quikgit)
 
 ---
-
-**Made with love by the QuikGit Team**
 
 *Streamline your GitHub workflow, one repository at a time.*

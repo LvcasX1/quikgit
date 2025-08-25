@@ -65,7 +65,8 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab", "shift+tab":
 			return m.handleTabNavigation(msg.String() == "shift+tab")
 		case "enter":
-			if m.focusedField == 0 && strings.TrimSpace(m.queryInput.Value()) != "" {
+			// Allow search from any field as long as query is not empty
+			if strings.TrimSpace(m.queryInput.Value()) != "" {
 				return m.performSearch()
 			}
 		case "up", "down":
@@ -374,7 +375,7 @@ func (m *SearchModel) renderInstructions(width int) string {
 		Align(lipgloss.Center)
 
 	return instructionsStyle.Render(
-		"Tab to navigate fields • Enter to search • Esc to go back",
+		"Tab to navigate fields • Enter to search from any field • Esc to go back",
 	)
 }
 
