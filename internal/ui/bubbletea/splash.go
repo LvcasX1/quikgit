@@ -31,12 +31,21 @@ func (m *SplashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case tea.KeyMsg:
 		// Allow skipping splash screen with any key
-		return m, m.app.NavigateTo(StateMainMenu)
+		return m, m.navigateToNextState()
 	case SplashTimeoutMsg:
-		// Timeout reached, go to main menu
-		return m, m.app.NavigateTo(StateMainMenu)
+		// Timeout reached, check authentication and navigate accordingly
+		return m, m.navigateToNextState()
 	}
 	return m, nil
+}
+
+// navigateToNextState determines where to go after splash based on auth status
+func (m *SplashModel) navigateToNextState() tea.Cmd {
+	if m.app.isAuthenticated {
+		return m.app.NavigateTo(StateMainMenu)
+	} else {
+		return m.app.NavigateTo(StateAuth)
+	}
 }
 
 func (m *SplashModel) View() string {
@@ -69,13 +78,18 @@ func (m *SplashModel) View() string {
 
 	styledArt := artStyle.Render(asciiArt)
 
-	// Loading indicator
+	// Loading indicator with authentication status
 	loadingStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Align(lipgloss.Center).
 		MarginTop(3)
 
-	loading := loadingStyle.Render("Loading... (press any key to skip)")
+	loadingText := "Loading... (press any key to skip)"
+	if !m.app.isAuthenticated {
+		loadingText = "Loading... (authentication required)"
+	}
+
+	loading := loadingStyle.Render(loadingText)
 
 	// Combine all elements
 	content := lipgloss.JoinVertical(lipgloss.Center, styledArt, loading)
