@@ -14,15 +14,6 @@ import (
 	ghClient "github.com/lvcasx1/quikgit/internal/github"
 )
 
-type AuthModel struct {
-	app            *Application
-	step           authStep
-	tokenInput     textinput.Model
-	status         string
-	error          error
-	tokenSubmitted bool
-}
-
 type authStep int
 
 const (
@@ -32,12 +23,29 @@ const (
 	stepError
 )
 
+type AuthModel struct {
+	app            *Application
+	step           authStep
+	tokenInput     textinput.Model
+	status         string
+	error          error
+	tokenSubmitted bool
+}
+
 // AuthStatusMsg represents authentication status updates
 type AuthStatusMsg struct {
 	Success bool
 	Error   error
 	Message string
 }
+
+type AuthErrorMsg struct {
+	Err error
+}
+
+type AuthSuccessMsg struct{}
+
+type BlinkMsg struct{}
 
 func NewAuthModel(app *Application) *AuthModel {
 	// Create token input with obfuscation
@@ -147,8 +155,8 @@ func (m *AuthModel) submitToken() (tea.Model, tea.Cmd) {
 	}
 }
 
+
 func (m *AuthModel) View() string {
-	// Use full screen dimensions with fallback
 	width := m.app.width
 	height := m.app.height - 3
 	if width == 0 {

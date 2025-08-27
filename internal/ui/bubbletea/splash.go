@@ -66,6 +66,15 @@ func (m *SplashModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// navigateToNextState determines where to go after splash based on auth status
+func (m *SplashModel) navigateToNextState() tea.Cmd {
+	if m.app.isAuthenticated {
+		return m.app.NavigateTo(StateMainMenu)
+	} else {
+		return m.app.NavigateTo(StateAuth)
+	}
+}
+
 func (m *SplashModel) View() string {
 	// Get screen dimensions (if available)
 	width := m.app.width
@@ -96,7 +105,7 @@ func (m *SplashModel) View() string {
 
 	styledArt := artStyle.Render(asciiArt)
 
-	// Loading indicator
+	// Loading indicator with authentication status
 	loadingStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Align(lipgloss.Center).

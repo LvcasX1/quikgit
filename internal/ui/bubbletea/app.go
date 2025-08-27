@@ -2,6 +2,7 @@ package bubbletea
 
 import (
 	"context"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -75,6 +76,15 @@ func NewApplication(cfg *config.Config) *Application {
 		// Token loaded successfully and is valid
 		app.githubClient = ghClient.NewClient(app.authManager.GetClient())
 		app.isAuthenticated = true
+	} else if envToken := os.Getenv("GITHUB_TOKEN"); envToken != "" {
+		// Try to use token from environment variable
+		app.authManager.SetToken(envToken)
+		if app.authManager.IsAuthenticated() {
+			app.githubClient = ghClient.NewClient(app.authManager.GetClient())
+			app.isAuthenticated = true
+		} else {
+			app.isAuthenticated = false
+		}
 	} else {
 		app.isAuthenticated = false
 	}
