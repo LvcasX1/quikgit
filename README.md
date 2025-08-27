@@ -7,13 +7,15 @@
 
 A powerful Terminal User Interface (TUI) for GitHub repository management that streamlines the process of discovering, cloning, and setting up projects in your local development environment.
 
-![QuikGit Demo](demo.gif)
+<div align="center">
+  <img src="demo.gif" alt="QuikGit Demo" />
+</div>
 
 ## Features
 
 ### **Seamless Authentication**
-- **QR Code Login**: Authenticate with GitHub using a QR code
-- **Secure Token Management**: Safely store and manage access tokens
+- **Personal Access Token**: Simple token-based authentication via TUI
+- **Secure Token Storage**: Safely store and manage access tokens locally
 - **Session Persistence**: Stay logged in between sessions
 
 ### **Powerful Repository Discovery**
@@ -169,37 +171,28 @@ sudo mv quikgit /usr/local/bin/
 
 ## Quick Start
 
-### Step 1: Authentication Setup (One-time)
-
-Run the setup script for easy authentication configuration:
-
-```bash
-# After installation, run the setup script
-./setup-oauth.sh
-```
-
-**Or manually choose your authentication method:**
-
-- **Option A - Personal Access Token** (2 minutes):
-  ```bash
-  export GITHUB_TOKEN=your_token_here  # Get from: https://github.com/settings/tokens/new
-  ```
-
-- **Option B - OAuth with QR Code** (5 minutes):
-  ```bash
-  export GITHUB_CLIENT_ID=your_client_id  # Create app at: https://github.com/settings/applications/new
-  ```
-
-### Step 2: Launch QuikGit
+### Step 1: Launch QuikGit
 
 ```bash
 quikgit
 ```
 
-**Then:**
-1. **Authenticate**: Scan the QR code or visit the provided URL
-2. **Search Repositories**: Use the search interface to find repositories  
-3. **Select and Clone**: Choose repositories and let QuikGit handle cloning and setup
+### Step 2: First-time Authentication
+
+On first run, QuikGit will guide you through authentication:
+
+1. **Select "Authenticate with GitHub"** from the main menu
+2. **Enter your Personal Access Token** when prompted
+   - Create one at: https://github.com/settings/tokens/new
+   - Required scopes: `repo`, `read:user`, `read:org`
+3. **Token is validated and stored securely** for future use
+
+### Step 3: Start Using QuikGit
+
+**After authentication:**
+1. **Search Repositories**: Use the search interface to find repositories  
+2. **Select and Clone**: Choose repositories and let QuikGit handle cloning and setup
+3. **Automatic Setup**: Dependencies are installed automatically based on project type
 
 ## Keyboard Shortcuts
 
@@ -269,7 +262,6 @@ defaults:
 
 - `QUIKGIT_CONFIG`: Path to custom configuration file
 - `QUIKGIT_DEBUG`: Enable debug logging
-- `GITHUB_TOKEN`: Pre-set GitHub personal access token
 
 ## Usage Examples
 
@@ -387,8 +379,8 @@ goreleaser release --snapshot --clean --skip=publish
 
 #### Environment Setup for Releases:
 ```bash
-# Required for GitHub releases
-export GITHUB_TOKEN="ghp_your_token_here"
+# Required for GitHub releases (development only)
+export GITHUB_TOKEN="ghp_your_dev_token_here"
 
 # Optional: AUR auto-publishing  
 export AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_rsa)"
