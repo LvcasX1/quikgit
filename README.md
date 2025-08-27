@@ -294,7 +294,6 @@ quikgit --help
 ### Prerequisites
 - Go 1.21 or later
 - Git
-- [GoReleaser](https://goreleaser.com/install/) (for releases)
 - Make (optional)
 
 ### Key Dependencies
@@ -323,10 +322,8 @@ make test
 # or
 go test ./...
 
-# Build for all platforms using GoReleaser
+# Build for all platforms
 make cross-compile
-# or
-goreleaser build --snapshot --clean
 ```
 
 ### Development Workflow
@@ -349,63 +346,6 @@ make dev
 
 # Run development version
 make run-dev
-```
-
-### Release Process
-
-The project uses **GoReleaser** for automated cross-platform releases:
-
-```bash
-# Create and push a version tag
-git tag v1.0.0
-git push origin v1.0.0
-
-# Release using build script (recommended)
-./scripts/build.sh release
-
-# Or use GoReleaser directly
-goreleaser release
-
-# Local test release (no publishing)
-goreleaser release --snapshot --clean --skip=publish
-```
-
-#### What Gets Released Automatically:
-- ✅ **GitHub Releases** with binaries and checksums
-- ✅ **Homebrew Formula** (updates `lvcasx1/homebrew-tap`)
-- ✅ **Docker Images** (multi-arch to `ghcr.io/lvcasx1/quikgit`)
-- ✅ **Linux Packages** (`.deb`, `.rpm` for AMD64/ARM64)
-- ✅ **AUR Package** (auto-published to `aur.archlinux.org`)
-
-#### Environment Setup for Releases:
-```bash
-# Required for GitHub releases (development only)
-export GITHUB_TOKEN="ghp_your_dev_token_here"
-
-# Optional: AUR auto-publishing  
-export AUR_SSH_PRIVATE_KEY="$(cat ~/.ssh/aur_rsa)"
-
-# Optional: Custom APT repository
-export APT_REPO_URL="https://apt.yourrepo.com"
-export APT_REPO_KEY="your_apt_signing_key"
-```
-
-### Build Scripts
-
-```bash
-# Modern release workflow (uses GoReleaser)
-./scripts/build.sh release
-
-# Legacy build process (deprecated)
-./scripts/build.sh legacy-release
-
-# Test GoReleaser configuration
-./scripts/build.sh goreleaser
-
-# Individual commands
-./scripts/build.sh clean    # Clean build artifacts
-./scripts/build.sh test     # Run tests
-./scripts/build.sh build    # Build using GoReleaser
 ```
 
 ### Bubbletea Plugin Architecture
