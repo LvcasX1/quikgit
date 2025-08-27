@@ -67,6 +67,13 @@ type menuChoice struct {
 }
 
 func NewMainMenuModel(app *Application) *MainMenuModel {
+	var authDescription string
+	if app.isAuthenticated {
+		authDescription = "Update GitHub authentication or switch accounts"
+	} else {
+		authDescription = "Set up GitHub authentication with token"
+	}
+
 	choices := []menuChoice{
 		{
 			title:       "Search Repositories",
@@ -83,8 +90,8 @@ func NewMainMenuModel(app *Application) *MainMenuModel {
 			available:   true,
 		},
 		{
-			title:       "Authentication",
-			description: "Configure GitHub authentication token",
+			title:       "GitHub Setup",
+			description: authDescription,
 			icon:        "󰍁",
 			action:      StateAuth,
 			available:   true,
@@ -230,6 +237,9 @@ func (m *MainMenuModel) Init() tea.Cmd {
 }
 
 func (m *MainMenuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Update menu choices if authentication state changed
+	m.updateChoices()
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -249,6 +259,27 @@ func (m *MainMenuModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+// updateChoices refreshes the menu choices based on current authentication state
+func (m *MainMenuModel) updateChoices() {
+	var authDescription string
+	if m.app.isAuthenticated {
+		authDescription = "Update GitHub authentication or switch accounts"
+	} else {
+		authDescription = "Set up GitHub authentication with token"
+	}
+
+	// Update the search repositories availability
+	m.choices[0].available = m.app.githubClient != nil
+
+	// Update the GitHub Setup description
+	if m.choices[2].description != authDescription {
+		m.choices[2].description = authDescription
+		// Clear caches to force re-render
+		m.cachedMenu = ""
+		m.preRenderMenuContent()
+	}
 }
 
 func (m *MainMenuModel) View() string {

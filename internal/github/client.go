@@ -17,6 +17,7 @@ type Repository struct {
 	Description string    `json:"description"`
 	CloneURL    string    `json:"clone_url"`
 	SSHURL      string    `json:"ssh_url"`
+	HTMLURL     string    `json:"html_url"`
 	Language    string    `json:"language"`
 	Stars       int       `json:"stargazers_count"`
 	Forks       int       `json:"forks_count"`
@@ -297,6 +298,7 @@ func convertRepository(repo *github.Repository) *Repository {
 		Description: repo.GetDescription(),
 		CloneURL:    repo.GetCloneURL(),
 		SSHURL:      repo.GetSSHURL(),
+		HTMLURL:     repo.GetHTMLURL(),
 		Language:    repo.GetLanguage(),
 		Stars:       repo.GetStargazersCount(),
 		Forks:       repo.GetForksCount(),

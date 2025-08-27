@@ -116,7 +116,7 @@ func (a *Application) showSearchResults() {
 	if a.resultsList == nil {
 		a.createResultsListEnhanced()
 	}
-	
+
 	// Clear and populate results list
 	a.resultsList.Clear()
 	a.resultsList.SetTitle(fmt.Sprintf(" %s Search Results (%d found) ", IconMap["🔍"], len(a.searchResults)))
@@ -130,7 +130,7 @@ func (a *Application) showSearchResults() {
 			if a.selectedIndices[i] {
 				selectedIcon = "[green]" + IconMap["✅"] + "[white] "
 			}
-			
+
 			// Card header with repo name and language
 			primary := fmt.Sprintf("%s[white::b]%s %s[-::-]", selectedIcon, IconMap["📁"], repo.FullName)
 			if repo.Language != "" {
@@ -139,7 +139,7 @@ func (a *Application) showSearchResults() {
 
 			// Card body with description and stats
 			var cardBody []string
-			
+
 			if repo.Description != "" {
 				desc := repo.Description
 				if len(desc) > 80 {
@@ -147,14 +147,14 @@ func (a *Application) showSearchResults() {
 				}
 				cardBody = append(cardBody, fmt.Sprintf("[gray]%s[-]", desc))
 			}
-			
+
 			// Stats with icons and colors
 			statsLine := fmt.Sprintf("[yellow]%s %d[-]  [blue]%s %d[-]", IconMap["⭐"], repo.Stars, IconMap["🍴"], repo.Forks)
 			if repo.UpdatedAt.Year() > 1 {
 				statsLine += fmt.Sprintf("  [gray]%s %s[-]", IconMap["📅"], repo.UpdatedAt.Format("2006-01-02"))
 			}
 			cardBody = append(cardBody, statsLine)
-			
+
 			// Join card body with line breaks
 			secondary := strings.Join(cardBody, "\n")
 
@@ -352,13 +352,13 @@ func (a *Application) toggleSelection(index int) {
 	if index < 0 || index >= len(a.searchResults) {
 		return
 	}
-	
+
 	if a.selectedIndices[index] {
 		delete(a.selectedIndices, index)
 	} else {
 		a.selectedIndices[index] = true
 	}
-	
+
 	// Update selected repos array
 	a.updateSelectedRepos()
 	a.showSearchResults() // Refresh display
@@ -409,14 +409,14 @@ func (a *Application) createResultsListEnhanced() {
 	a.resultsList.SetBorder(true)
 	a.resultsList.ShowSecondaryText(true)
 	a.resultsList.SetHighlightFullLine(true)
-	
+
 	// Fix highlighting colors for better visibility
-	a.resultsList.SetSelectedTextColor(tcell.ColorBlack)      // Dark text on light background
+	a.resultsList.SetSelectedTextColor(tcell.ColorBlack)           // Dark text on light background
 	a.resultsList.SetSelectedBackgroundColor(tcell.ColorLightBlue) // Light blue selection
-	a.resultsList.SetMainTextColor(tcell.ColorDefault)        // Default text color
-	a.resultsList.SetSecondaryTextColor(tcell.ColorDefault)   // Default secondary text
-	a.resultsList.SetBackgroundColor(tcell.ColorDefault)      // Transparent background
-	
+	a.resultsList.SetMainTextColor(tcell.ColorDefault)             // Default text color
+	a.resultsList.SetSecondaryTextColor(tcell.ColorDefault)        // Default secondary text
+	a.resultsList.SetBackgroundColor(tcell.ColorDefault)           // Transparent background
+
 	// Card-style padding and rounded borders
 	a.resultsList.SetBorderPadding(1, 1, 2, 2)
 	a.resultsList.SetMainTextStyle(tcell.StyleDefault)

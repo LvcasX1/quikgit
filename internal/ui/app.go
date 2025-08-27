@@ -99,12 +99,12 @@ func NewApplication(cfg *config.Config) *Application {
 func (a *Application) setupColorfulTheme() {
 	// Set transparent/terminal default backgrounds
 	a.pages.SetBackgroundColor(tcell.ColorDefault)
-	
+
 	// Set up colorful theme while maintaining transparency
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 	tview.Styles.ContrastBackgroundColor = tcell.ColorDefault
 	tview.Styles.MoreContrastBackgroundColor = tcell.ColorDefault
-	
+
 	// Colorful borders and text
 	tview.Styles.BorderColor = tcell.ColorDarkCyan
 	tview.Styles.TitleColor = tcell.ColorLightGreen
@@ -114,7 +114,7 @@ func (a *Application) setupColorfulTheme() {
 	tview.Styles.TertiaryTextColor = tcell.ColorYellow
 	tview.Styles.InverseTextColor = tcell.ColorBlack
 	tview.Styles.ContrastSecondaryTextColor = tcell.ColorLightGray
-	
+
 	// Set rounded border style
 	tview.Borders.Horizontal = '─'
 	tview.Borders.Vertical = '│'
@@ -633,7 +633,7 @@ func (a *Application) handleBack() {
 			// This will be handled by the cloning progress view input capture
 		}
 	case StateInstalling:
-		// Allow cancel during installation  
+		// Allow cancel during installation
 		if a.pages.HasPage("installing") {
 			// This will be handled by the installation progress view input capture
 		}

@@ -2,6 +2,8 @@ package bubbletea
 
 import (
 	"fmt"
+	"os/exec"
+	"runtime"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,7 +57,10 @@ func (m *SearchResultsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "d":
 			// Deselect all
 			m.selectedRepos = make(map[int]bool)
-		case "enter", "c":
+		case "enter", "n":
+			// Navigate to repository in browser
+			return m.openRepository()
+		case "c":
 			// Clone selected or current repository
 			return m.startCloning()
 		case "i":
@@ -327,11 +332,12 @@ func (m *SearchResultsModel) renderInstructions(selectedCount int, width int) st
 	instructions = append(instructions, "Space: select/deselect")
 	instructions = append(instructions, "a: select all")
 	instructions = append(instructions, "d: deselect all")
+	instructions = append(instructions, "Enter/n: open repository in browser")
 
 	if selectedCount > 0 {
-		instructions = append(instructions, fmt.Sprintf("Enter/c: clone %d selected", selectedCount))
+		instructions = append(instructions, fmt.Sprintf("c: clone %d selected", selectedCount))
 	} else {
-		instructions = append(instructions, "Enter/c: clone current")
+		instructions = append(instructions, "c: clone current")
 	}
 
 	instructions = append(instructions, "Esc: back to search")
@@ -354,6 +360,34 @@ func (m *SearchResultsModel) countSelected() int {
 		}
 	}
 	return count
+}
+
+func (m *SearchResultsModel) openRepository() (tea.Model, tea.Cmd) {
+	if m.cursor >= len(m.app.searchResults) {
+		return m, nil
+	}
+
+	repo := m.app.searchResults[m.cursor]
+	url := repo.HTMLURL
+
+	// Open repository in default browser
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	case "darwin":
+		cmd = exec.Command("open", url)
+	default: // linux and others
+		cmd = exec.Command("xdg-open", url)
+	}
+
+	// Execute the command to open browser
+	if err := cmd.Start(); err != nil {
+		// If opening browser fails, we could show an error message
+		// For now, just continue without error handling
+	}
+
+	return m, nil
 }
 
 func (m *SearchResultsModel) startCloning() (tea.Model, tea.Cmd) {

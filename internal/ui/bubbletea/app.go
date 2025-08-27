@@ -16,6 +16,7 @@ type AppState int
 
 const (
 	StateSplash AppState = iota
+	StateFirstStartup
 	StateMainMenu
 	StateAuth
 	StateSearch
@@ -78,7 +79,7 @@ func NewApplication(cfg *config.Config) *Application {
 		app.isAuthenticated = false
 	}
 
-	// Set initial view to splash screen
+	// Always start with splash screen regardless of authentication status
 	app.currentView = NewSplashModel(app)
 
 	return app
@@ -184,6 +185,8 @@ func (a *Application) handleStateChange(msg StateChangeMsg) (tea.Model, tea.Cmd)
 	switch msg.NewState {
 	case StateSplash:
 		a.currentView = NewSplashModel(a)
+	case StateFirstStartup:
+		a.currentView = NewFirstStartupModel(a)
 	case StateMainMenu:
 		a.currentView = NewMainMenuModel(a)
 	case StateAuth:

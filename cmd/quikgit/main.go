@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/lvcasx1/quikgit/pkg/config"
 	"github.com/lvcasx1/quikgit/internal/ui/bubbletea"
+	"github.com/lvcasx1/quikgit/pkg/config"
 )
 
 const (

@@ -7,7 +7,7 @@
 
 A powerful Terminal User Interface (TUI) for GitHub repository management that streamlines the process of discovering, cloning, and setting up projects in your local development environment.
 
-![QuikGit Demo](docs/images/demo.gif)
+![QuikGit Demo](demo.gif)
 
 ## Features
 
@@ -218,8 +218,10 @@ quikgit
 ### Repository Lists
 - `Space`: Toggle selection
 - `a`: Select all repositories
-- `n`: Clear all selections
+- `d`: Clear all selections
 - `j/k` or `↑/↓`: Navigate items
+- `Enter/n`: Open repository in browser
+- `c`: Clone selected/current repository
 
 ### During Operations
 - `d`: Toggle detailed output view

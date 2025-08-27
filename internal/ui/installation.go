@@ -25,22 +25,22 @@ type InstallationProgress struct {
 
 // InstallationManager handles the dependency installation process
 type InstallationManager struct {
-	app           *Application
-	repositories  []string // Paths to cloned repositories
-	progressView  *tview.TextView
-	progressBars  map[string]*ProgressBar
-	installMgr    *install.Manager
-	ctx           context.Context
-	cancel        context.CancelFunc
-	mutex         sync.Mutex
+	app          *Application
+	repositories []string // Paths to cloned repositories
+	progressView *tview.TextView
+	progressBars map[string]*ProgressBar
+	installMgr   *install.Manager
+	ctx          context.Context
+	cancel       context.CancelFunc
+	mutex        sync.Mutex
 
 	// Progress tracking
-	completed     map[string]bool
-	errors        map[string]error
-	statuses      map[string]string
-	allCompleted  bool
-	successCount  int
-	errorCount    int
+	completed    map[string]bool
+	errors       map[string]error
+	statuses     map[string]string
+	allCompleted bool
+	successCount int
+	errorCount   int
 }
 
 // startInstallation starts the dependency installation process
