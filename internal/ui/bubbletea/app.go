@@ -27,6 +27,15 @@ const (
 	StateQuickClone
 )
 
+// SearchSession holds search filter state that persists during the session
+type SearchSession struct {
+	LastQuery       string
+	LanguageCursor  int
+	SortCursor      int
+	ScopeCursor     int
+	IncludeForks    bool
+}
+
 // Application represents the main Bubble Tea application
 type Application struct {
 	// Core state
@@ -52,6 +61,9 @@ type Application struct {
 	selectedIndices map[int]bool
 	clonedPaths     []string // Paths of successfully cloned repositories
 
+	// Session state for search filters (preserved during session)
+	searchSession *SearchSession
+
 	// Messages and errors
 	message string
 	error   error
@@ -68,6 +80,13 @@ func NewApplication(cfg *config.Config) *Application {
 		ctx:             ctx,
 		config:          cfg,
 		selectedIndices: make(map[int]bool),
+		searchSession: &SearchSession{
+			LastQuery:       "",
+			LanguageCursor:  0, // "Any"
+			SortCursor:      0, // "Best match"
+			ScopeCursor:     0, // "Organization"
+			IncludeForks:    false,
+		},
 	}
 
 	// Initialize auth manager and load existing token

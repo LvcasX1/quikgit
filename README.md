@@ -1,9 +1,9 @@
 # QuikGit
 
-[![Go Version](https://img.shields.io/github/go-mod/go-version/lvcasx1/quikgit)](https://golang.org/)
-[![Release](https://img.shields.io/github/v/release/lvcasx1/quikgit)](https://github.com/lvcasx1/quikgit/releases)
-[![License](https://img.shields.io/github/license/lvcasx1/quikgit)](LICENSE)
-[![AUR Package](https://img.shields.io/aur/version/quikgit)](https://aur.archlinux.org/packages/quikgit)
+[![Go Version](https://img.shields.io/badge/Go-1.24.6-blue?logo=go)](https://golang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Release](https://img.shields.io/github/v/release/lvcasx1/quikgit?include_prereleases&sort=semver)](https://github.com/lvcasx1/quikgit/releases)
+[![Platform Support](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/lvcasx1/quikgit)
 
 A powerful Terminal User Interface (TUI) for GitHub repository management that streamlines the process of discovering, cloning, and setting up projects in your local development environment.
 

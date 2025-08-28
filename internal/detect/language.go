@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,6 +21,85 @@ type Command struct {
 	Args        []string
 	Description string
 	Required    bool
+}
+
+// Framework detection based on package.json dependencies
+var JSFrameworkDetectors = []ProjectType{
+	{
+		Name:     "Next.js (Yarn Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json", "yarn.lock"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-next",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Next.js dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Next.js React framework with Yarn (detected via package.json)",
+	},
+	{
+		Name:     "Next.js (Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-next",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Next.js dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Next.js React framework (detected via package.json)",
+	},
+	{
+		Name:     "Vue.js (Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-vue",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Vue.js dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Vue.js framework (detected via package.json)",
+	},
+	{
+		Name:     "Angular (Package)",
+		Language: "TypeScript",
+		Files:    []string{"package.json"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-angular",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Angular dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Angular framework (detected via package.json)",
+	},
+	{
+		Name:     "React (Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-react",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install React dependencies",
+				Required:    true,
+			},
+		},
+		Description: "React framework (detected via package.json)",
+	},
 }
 
 var SupportedProjects = []ProjectType{
@@ -269,19 +349,262 @@ var SupportedProjects = []ProjectType{
 		},
 		Description: "Flutter project",
 	},
+	{
+		Name:     "Next.js",
+		Language: "JavaScript",
+		Files:    []string{"next.config.js", "next.config.mjs", "next.config.ts", "pages/", "app/"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-next",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Next.js dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Next.js React framework",
+	},
+	{
+		Name:     "Next.js (Yarn)",
+		Language: "JavaScript",
+		Files:    []string{"yarn.lock", "next.config.js", "next.config.mjs", "next.config.ts", "pages/", "app/"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-next",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Next.js dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Next.js React framework with Yarn",
+	},
+	{
+		Name:     "Vue.js",
+		Language: "JavaScript",
+		Files:    []string{"vue.config.js", "vite.config.js", "src/main.js", "src/App.vue"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-vue",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Vue.js dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Vue.js framework",
+	},
+	{
+		Name:     "Vue.js (Yarn)",
+		Language: "JavaScript",
+		Files:    []string{"yarn.lock", "vue.config.js", "vite.config.js", "src/main.js", "src/App.vue"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-vue",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Vue.js dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Vue.js framework with Yarn",
+	},
+	{
+		Name:     "Angular",
+		Language: "TypeScript",
+		Files:    []string{"angular.json", "src/app/app.module.ts"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-angular",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Angular dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Angular framework",
+	},
+	{
+		Name:     "Angular (Yarn)",
+		Language: "TypeScript",
+		Files:    []string{"yarn.lock", "angular.json", "src/app/app.module.ts"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-angular",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Angular dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Angular framework with Yarn",
+	},
+	{
+		Name:     "Svelte",
+		Language: "JavaScript",
+		Files:    []string{"svelte.config.js", "src/App.svelte"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-svelte",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Svelte dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Svelte framework",
+	},
+	{
+		Name:     "SvelteKit",
+		Language: "JavaScript",
+		Files:    []string{"svelte.config.js", "src/app.html"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-sveltekit",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install SvelteKit dependencies",
+				Required:    true,
+			},
+		},
+		Description: "SvelteKit framework",
+	},
+	{
+		Name:     "Nuxt.js",
+		Language: "JavaScript",
+		Files:    []string{"nuxt.config.js", "nuxt.config.ts"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-nuxt",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Nuxt.js dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Nuxt.js Vue framework",
+	},
+	{
+		Name:     "Gatsby",
+		Language: "JavaScript",
+		Files:    []string{"gatsby-config.js", "gatsby-config.ts"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-gatsby",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Gatsby dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Gatsby React framework",
+	},
+	{
+		Name:     "Vite",
+		Language: "JavaScript",
+		Files:    []string{"vite.config.js", "vite.config.ts"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-vite",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Vite dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Vite build tool",
+	},
+	{
+		Name:     "Astro",
+		Language: "JavaScript",
+		Files:    []string{"astro.config.mjs", "astro.config.js"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-astro",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Astro dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Astro static site generator",
+	},
+	{
+		Name:     "Remix",
+		Language: "JavaScript",
+		Files:    []string{"remix.config.js", "app/entry.client.tsx"},
+		Commands: []Command{
+			{
+				Name:        "npm-install-remix",
+				Command:     "npm",
+				Args:        []string{"install"},
+				Description: "Install Remix dependencies",
+				Required:    true,
+			},
+		},
+		Description: "Remix React framework",
+	},
 }
 
 type Detector struct {
 	projectPath string
 }
 
+type PackageJSON struct {
+	Dependencies    map[string]string `json:"dependencies"`
+	DevDependencies map[string]string `json:"devDependencies"`
+	Scripts         map[string]string `json:"scripts"`
+}
+
 func NewDetector(projectPath string) *Detector {
 	return &Detector{projectPath: projectPath}
+}
+
+func (d *Detector) parsePackageJSON() (*PackageJSON, error) {
+	packagePath := filepath.Join(d.projectPath, "package.json")
+	data, err := os.ReadFile(packagePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var pkg PackageJSON
+	err = json.Unmarshal(data, &pkg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pkg, nil
+}
+
+func (d *Detector) hasPackageDependency(depNames ...string) bool {
+	pkg, err := d.parsePackageJSON()
+	if err != nil {
+		return false
+	}
+
+	for _, depName := range depNames {
+		if _, exists := pkg.Dependencies[depName]; exists {
+			return true
+		}
+		if _, exists := pkg.DevDependencies[depName]; exists {
+			return true
+		}
+	}
+	return false
 }
 
 func (d *Detector) DetectProjects() ([]*ProjectType, error) {
 	var detected []*ProjectType
 
+	// First, check for JavaScript frameworks via package.json
+	for _, project := range JSFrameworkDetectors {
+		if d.matchesJSFramework(project) {
+			projectCopy := project
+			detected = append(detected, &projectCopy)
+		}
+	}
+
+	// Then check regular file-based detection
 	for _, project := range SupportedProjects {
 		if d.matchesProject(project) {
 			projectCopy := project
@@ -290,6 +613,27 @@ func (d *Detector) DetectProjects() ([]*ProjectType, error) {
 	}
 
 	return detected, nil
+}
+
+func (d *Detector) matchesJSFramework(project ProjectType) bool {
+	// Check if package.json exists first
+	if !d.hasMatchingFiles("package.json") {
+		return false
+	}
+
+	// Check for specific framework dependencies
+	switch project.Name {
+	case "Next.js (Yarn Package)", "Next.js (Package)":
+		return d.hasPackageDependency("next")
+	case "Vue.js (Package)":
+		return d.hasPackageDependency("vue", "@vue/cli", "nuxt")
+	case "Angular (Package)":
+		return d.hasPackageDependency("@angular/core", "@angular/cli")
+	case "React (Package)":
+		return d.hasPackageDependency("react") && !d.hasPackageDependency("next", "gatsby", "@remix-run/react")
+	}
+	
+	return false
 }
 
 func (d *Detector) DetectPrimaryProject() (*ProjectType, error) {
@@ -302,18 +646,45 @@ func (d *Detector) DetectPrimaryProject() (*ProjectType, error) {
 		return nil, nil
 	}
 
-	// Priority order for conflicting project types
+	// Priority order for conflicting project types (package.json detection gets highest priority)
 	priorities := map[string]int{
-		"Node.js (yarn)":  10,
-		"Node.js (npm)":   9,
-		"Python (Poetry)": 8,
-		"Python (Pipenv)": 7,
-		"Python (pip)":    6,
-		"Go":              5,
-		"Rust":            4,
-		"Java (Gradle)":   3,
-		"Java (Maven)":    2,
-		"Ruby (Bundler)":  1,
+		// Package.json based detection (highest priority)
+		"Next.js (Yarn Package)": 31,
+		"Next.js (Package)":      30,
+		"Angular (Package)":      29,
+		"Vue.js (Package)":       28,
+		"React (Package)":        27,
+		
+		// File-based framework detection
+		"Next.js (Yarn)":     25,
+		"Next.js":            24,
+		"Nuxt.js":           23,
+		"Gatsby":            22,
+		"Remix":             21,
+		"Angular (Yarn)":    20,
+		"Angular":           19,
+		"Vue.js (Yarn)":     18,
+		"Vue.js":            17,
+		"SvelteKit":         16,
+		"Svelte":            15,
+		"Astro":             14,
+		"Vite":              13,
+		
+		// Generic Node.js (lower priority than frameworks)
+		"Node.js (yarn)":    12,
+		"Node.js (npm)":     11,
+		
+		// Other languages
+		"Python (Poetry)":   10,
+		"Python (Pipenv)":   9,
+		"Python (pip)":      8,
+		"Go":                7,
+		"Rust":              6,
+		"Java (Gradle)":     5,
+		"Java (Maven)":      4,
+		"Ruby (Bundler)":    3,
+		"Dart (Flutter)":    2,
+		"Swift":             1,
 	}
 
 	var best *ProjectType
@@ -352,8 +723,17 @@ func (d *Detector) hasMatchingFiles(pattern string) bool {
 	}
 
 	filePath := filepath.Join(d.projectPath, pattern)
-	_, err := os.Stat(filePath)
-	return err == nil
+	stat, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	
+	// Handle directory patterns (ending with /)
+	if strings.HasSuffix(pattern, "/") {
+		return stat.IsDir()
+	}
+	
+	return true
 }
 
 func (d *Detector) GetProjectInfo(projectType *ProjectType) map[string]interface{} {

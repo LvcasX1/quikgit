@@ -38,18 +38,36 @@ func NewSearchModel(app *Application) *SearchModel {
 	queryInput.CharLimit = 100
 	queryInput.Width = 30 // Smaller initial width
 
-	return &SearchModel{
+	// Restore previous query if available
+	if app.searchSession != nil && app.searchSession.LastQuery != "" {
+		queryInput.SetValue(app.searchSession.LastQuery)
+		queryInput.SetCursor(len(app.searchSession.LastQuery))
+	}
+
+	model := &SearchModel{
 		app:             app,
 		queryInput:      queryInput,
 		languageOptions: []string{"Any", "Go", "JavaScript", "TypeScript", "Python", "Java", "C++", "C", "Rust", "Ruby", "PHP"},
-		languageCursor:  0,
 		sortOptions:     []string{"Best match", "Stars", "Forks", "Updated", "Created"},
-		sortCursor:      0,
 		scopeOptions:    []string{"Organization", "All"},
-		scopeCursor:     0, // Default to Organization
-		includeForks:    false,
 		focusedField:    0,
 	}
+
+	// Restore session state if available
+	if app.searchSession != nil {
+		model.languageCursor = app.searchSession.LanguageCursor
+		model.sortCursor = app.searchSession.SortCursor
+		model.scopeCursor = app.searchSession.ScopeCursor
+		model.includeForks = app.searchSession.IncludeForks
+	} else {
+		// Default values
+		model.languageCursor = 0
+		model.sortCursor = 0
+		model.scopeCursor = 0
+		model.includeForks = false
+	}
+
+	return model
 }
 
 func (m *SearchModel) Init() tea.Cmd {
@@ -61,6 +79,8 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
+			// Save current search state before navigating away
+			m.saveSearchState()
 			return m, m.app.NavigateTo(StateMainMenu)
 		case "tab", "shift+tab":
 			return m.handleTabNavigation(msg.String() == "shift+tab")
@@ -74,6 +94,8 @@ func (m *SearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case " ":
 			if m.focusedField == 4 { // Updated field index for forks
 				m.includeForks = !m.includeForks
+				// Save state immediately when forks toggle changes
+				m.saveSearchState()
 			}
 		}
 	case SearchResultMsg:
@@ -435,6 +457,9 @@ func (m *SearchModel) handleArrowNavigation(up bool) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
+	
+	// Save state immediately when selections change
+	m.saveSearchState()
 	return m, nil
 }
 
@@ -446,12 +471,26 @@ func (m *SearchModel) performSearch() (tea.Model, tea.Cmd) {
 	m.searching = true
 	m.searchError = nil
 
+	// Save current search state to session
+	m.saveSearchState()
+
 	query := strings.TrimSpace(m.queryInput.Value())
 	language := m.languageOptions[m.languageCursor]
 	sortBy := m.sortOptions[m.sortCursor]
 	scope := m.scopeOptions[m.scopeCursor]
 
 	return m, m.searchRepositories(query, language, sortBy, scope, m.includeForks)
+}
+
+// saveSearchState saves the current search filters to the application session
+func (m *SearchModel) saveSearchState() {
+	if m.app.searchSession != nil {
+		m.app.searchSession.LastQuery = strings.TrimSpace(m.queryInput.Value())
+		m.app.searchSession.LanguageCursor = m.languageCursor
+		m.app.searchSession.SortCursor = m.sortCursor
+		m.app.searchSession.ScopeCursor = m.scopeCursor
+		m.app.searchSession.IncludeForks = m.includeForks
+	}
 }
 
 func (m *SearchModel) searchRepositories(query, language, sortBy, scope string, includeForks bool) tea.Cmd {

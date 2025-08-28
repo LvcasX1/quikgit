@@ -257,12 +257,25 @@ func (m *Manager) executeCommand(ctx context.Context, repoPath, repoName, projec
 			line := scanner.Text()
 			outputBuilder.WriteString(line + "\n")
 
-			// Send progress updates for verbose output
+			// Send more detailed progress updates based on output
+			status := "Running"
+			if strings.Contains(strings.ToLower(line), "installing") {
+				status = "Installing packages"
+			} else if strings.Contains(strings.ToLower(line), "downloading") {
+				status = "Downloading packages"
+			} else if strings.Contains(strings.ToLower(line), "resolving") {
+				status = "Resolving dependencies"
+			} else if strings.Contains(strings.ToLower(line), "building") {
+				status = "Building packages"
+			} else if strings.Contains(strings.ToLower(line), "fetching") {
+				status = "Fetching packages"
+			}
+
 			m.sendProgress(InstallProgress{
 				Repository:  repoName,
 				ProjectType: projectType,
 				Command:     cmdStr,
-				Status:      "Running",
+				Status:      status,
 				Output:      line,
 			})
 		}
@@ -277,8 +290,30 @@ func (m *Manager) executeCommand(ctx context.Context, repoPath, repoName, projec
 		}
 	}()
 
+	// Send periodic updates while command is running
+	done := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		
+		for {
+			select {
+			case <-ticker.C:
+				m.sendProgress(InstallProgress{
+					Repository:  repoName,
+					ProjectType: projectType,
+					Command:     cmdStr,
+					Status:      "Running...",
+				})
+			case <-done:
+				return
+			}
+		}
+	}()
+
 	// Wait for the command to finish
 	err = execCmd.Wait()
+	close(done) // Stop the periodic updates
 	wg.Wait()
 
 	result.Output = outputBuilder.String()
@@ -301,8 +336,13 @@ func (m *Manager) executeCommand(ctx context.Context, repoPath, repoName, projec
 func (m *Manager) sendProgress(progress InstallProgress) {
 	select {
 	case m.progress <- progress:
-	default:
-		// Channel is full, skip this update
+	case <-time.After(100 * time.Millisecond):
+		// Channel is full or blocked, try to make space
+		select {
+		case m.progress <- progress:
+		default:
+			// Still can't send, skip this update
+		}
 	}
 }
 

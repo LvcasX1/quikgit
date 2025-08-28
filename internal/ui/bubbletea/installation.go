@@ -100,7 +100,7 @@ func (m *InstallationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case InstallStartMsg:
 		if !m.started {
 			m.started = true
-			return m, m.monitorProgress()
+			return m, tea.Batch(m.startActualInstallation(), m.monitorProgress())
 		}
 	}
 
@@ -194,18 +194,30 @@ func (m *InstallationModel) renderProgress(width int) string {
 			} else if m.errors[repoName] != nil {
 				progressPercent = 0.0 // Reset on error
 			} else {
-				// Calculate progress based on status
+				// Calculate progress based on status - improved for npm/yarn
 				status := m.statuses[repoName]
 				switch {
 				case strings.Contains(status, "Detecting"):
 					progressPercent = 0.1
-				case strings.Contains(status, "Installing"):
+				case strings.Contains(status, "Installing dependencies"):
+					progressPercent = 0.2
+				case strings.Contains(status, "Resolving dependencies"):
+					progressPercent = 0.3
+				case strings.Contains(status, "Downloading packages"):
 					progressPercent = 0.5
-				case strings.Contains(status, "Running"):
+				case strings.Contains(status, "Fetching packages"):
+					progressPercent = 0.6
+				case strings.Contains(status, "Installing packages"):
 					progressPercent = 0.7
+				case strings.Contains(status, "Building packages"):
+					progressPercent = 0.8
+				case strings.Contains(status, "Running"):
+					progressPercent = 0.4
 				case strings.Contains(status, "Completing"):
 					progressPercent = 0.9
 				case strings.Contains(status, "Waiting"):
+					progressPercent = 0.0
+				case strings.Contains(status, "Failed"):
 					progressPercent = 0.0
 				default:
 					progressPercent = 0.2
@@ -290,8 +302,8 @@ func (m *InstallationModel) startInstallationProcess() tea.Cmd {
 			}
 		}
 
-		// Create installation manager
-		m.installMgr = install.NewManager(3, 10*time.Minute)
+		// Create installation manager with extended timeout for npm/yarn
+		m.installMgr = install.NewManager(3, 15*time.Minute)
 		m.installMgr.SetSkipOnError(true)
 
 		return InstallStartMsg{}
@@ -300,45 +312,60 @@ func (m *InstallationModel) startInstallationProcess() tea.Cmd {
 
 func (m *InstallationModel) monitorProgress() tea.Cmd {
 	return func() tea.Msg {
-		// Start the actual installation in a separate goroutine
-		go func() {
-			m.installMgr.InstallDependencies(m.ctx, m.repositories)
-		}()
-
-		// Monitor the progress channel
+		// Get progress channel
 		progressChan := m.installMgr.GetProgressChannel()
 
-		// Wait for the first progress update and return it
-		select {
-		case progress, ok := <-progressChan:
-			if !ok {
-				// Channel closed, all done
+		// Continuously monitor the progress channel
+		for {
+			select {
+			case progress, ok := <-progressChan:
+				if !ok {
+					// Channel closed, all done
+					return InstallCompleteMsg{}
+				}
+
+				// Return immediately with this progress update
+				// The Update function will call this again to continue monitoring
+				return InstallProgressMsg{
+					Repository:  progress.Repository,
+					ProjectType: progress.ProjectType,
+					Status:      progress.Status,
+					Error:       progress.Error,
+					Completed:   progress.Completed,
+				}
+
+			case <-m.ctx.Done():
+				// Context cancelled
 				return InstallCompleteMsg{}
-			}
 
-			return InstallProgressMsg{
-				Repository:  progress.Repository,
-				ProjectType: progress.ProjectType,
-				Status:      progress.Status,
-				Error:       progress.Error,
-				Completed:   progress.Completed,
-			}
-
-		case <-m.ctx.Done():
-			// Context cancelled
-			return InstallCompleteMsg{}
-
-		case <-time.After(5 * time.Second):
-			// Timeout - something went wrong
-			return InstallProgressMsg{
-				Repository: "system",
-				Error:      fmt.Errorf("installation timeout - no progress received"),
+			case <-time.After(1 * time.Second):
+				// Short timeout to keep the UI responsive
+				// Return a heartbeat message to continue monitoring
+				return InstallProgressMsg{
+					Repository: "_heartbeat",
+					Status:     "monitoring",
+				}
 			}
 		}
 	}
 }
 
+func (m *InstallationModel) startActualInstallation() tea.Cmd {
+	return func() tea.Msg {
+		// Start the actual installation in a separate goroutine
+		go func() {
+			m.installMgr.InstallDependencies(m.ctx, m.repositories)
+		}()
+		return InstallStartMsg{}
+	}
+}
+
 func (m *InstallationModel) handleProgressUpdate(msg InstallProgressMsg) (tea.Model, tea.Cmd) {
+	// Ignore heartbeat messages
+	if msg.Repository == "_heartbeat" {
+		return m, m.monitorProgress()
+	}
+	
 	// Update status
 	if msg.Repository != "system" {
 		repoName := filepath.Base(msg.Repository)
