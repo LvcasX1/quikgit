@@ -20,6 +20,7 @@ const (
 	StateFirstStartup
 	StateMainMenu
 	StateAuth
+	StateAuthRequired // New: Forced authentication (can't escape)
 	StateSearch
 	StateSearchResults
 	StateCloning
@@ -220,6 +221,8 @@ func (a *Application) handleStateChange(msg StateChangeMsg) (tea.Model, tea.Cmd)
 		a.currentView = NewMainMenuModel(a)
 	case StateAuth:
 		a.currentView = NewAuthModel(a)
+	case StateAuthRequired:
+		a.currentView = NewSecureAuthModel(a)
 	case StateSearch:
 		a.currentView = NewSearchModel(a)
 	case StateSearchResults:
@@ -253,8 +256,46 @@ type AuthStatusChangedMsg struct {
 // NavigateTo changes the application state
 func (a *Application) NavigateTo(state AppState) tea.Cmd {
 	return func() tea.Msg {
+		// Skip validation for certain states that don't require authentication
+		if !a.requiresAuthentication(state) {
+			return StateChangeMsg{NewState: state}
+		}
+
+		// Validate token before allowing navigation to protected states
+		if !a.isTokenValid() {
+			// Force authentication instead of requested state
+			return StateChangeMsg{NewState: StateAuthRequired}
+		}
+
 		return StateChangeMsg{NewState: state}
 	}
+}
+
+// requiresAuthentication checks if a state requires a valid GitHub token
+func (a *Application) requiresAuthentication(state AppState) bool {
+	switch state {
+	case StateSplash, StateFirstStartup, StateAuth, StateAuthRequired:
+		return false // These states don't require authentication
+	default:
+		return true // All other states require valid authentication
+	}
+}
+
+// isTokenValid validates the current GitHub token
+func (a *Application) isTokenValid() bool {
+	if a.authManager == nil {
+		return false
+	}
+
+	// Check if we have a token and it's authenticated
+	if !a.authManager.IsAuthenticated() {
+		a.isAuthenticated = false
+		return false
+	}
+
+	// Additional validation could be added here (e.g., test API call)
+	a.isAuthenticated = true
+	return true
 }
 
 // UpdateAuthStatus notifies the app when authentication status changes

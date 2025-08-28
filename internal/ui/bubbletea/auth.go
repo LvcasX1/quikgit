@@ -30,6 +30,7 @@ type AuthModel struct {
 	status         string
 	error          error
 	tokenSubmitted bool
+	secureMode     bool // When true, ESC is disabled and only Ctrl+C or q can exit
 }
 
 // AuthStatusMsg represents authentication status updates
@@ -48,6 +49,14 @@ type AuthSuccessMsg struct{}
 type BlinkMsg struct{}
 
 func NewAuthModel(app *Application) *AuthModel {
+	return newAuthModel(app, false)
+}
+
+func NewSecureAuthModel(app *Application) *AuthModel {
+	return newAuthModel(app, true)
+}
+
+func newAuthModel(app *Application, secure bool) *AuthModel {
 	// Create token input with obfuscation
 	tokenInput := textinput.New()
 	tokenInput.Placeholder = "ghp_your_github_token_here"
@@ -61,6 +70,7 @@ func NewAuthModel(app *Application) *AuthModel {
 		app:        app,
 		step:       stepTokenInput,
 		tokenInput: tokenInput,
+		secureMode: secure,
 	}
 }
 
@@ -72,8 +82,15 @@ func (m *AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+c", "q":
+			// Always allow these to quit the application
+			return m, tea.Quit
 		case "esc":
-			return m, m.app.NavigateTo(StateMainMenu)
+			// Only allow ESC navigation if not in secure mode
+			if !m.secureMode {
+				return m, m.app.NavigateTo(StateMainMenu)
+			}
+			// In secure mode, ESC is ignored
 		case "enter":
 			if m.step == stepTokenInput && !m.tokenSubmitted {
 				return m.submitToken()
@@ -86,16 +103,30 @@ func (m *AuthModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+	case StateChangeMsg:
+		// Handle direct state change messages in secure mode
+		if m.secureMode && msg.NewState == StateMainMenu {
+			return m, m.app.NavigateTo(StateMainMenu)
+		}
+
 	case AuthStatusMsg:
 		if msg.Success {
 			m.step = stepSuccess
 			m.status = msg.Message
 			// Update app authentication state
 			m.app.isAuthenticated = true
-			// Navigate back to main menu after a short delay
-			return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
-				return tea.KeyMsg{Type: tea.KeyEsc}
-			})
+			// Navigate based on mode
+			if m.secureMode {
+				// In secure mode, navigate directly to main menu after success
+				return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+					return StateChangeMsg{NewState: StateMainMenu}
+				})
+			} else {
+				// In normal mode, use ESC navigation
+				return m, tea.Tick(2*time.Second, func(t time.Time) tea.Msg {
+					return tea.KeyMsg{Type: tea.KeyEsc}
+				})
+			}
 		} else {
 			m.step = stepError
 			m.error = msg.Error
@@ -195,7 +226,13 @@ func (m *AuthModel) renderTokenInput(width int) string {
 		Align(lipgloss.Center).
 		MarginBottom(2)
 
-	title := titleStyle.Render("󰌆 GitHub Personal Access Token")
+	var titleText string
+	if m.secureMode {
+		titleText = "󰌾 GitHub Token Required"
+	} else {
+		titleText = "󰌆 GitHub Personal Access Token"
+	}
+	title := titleStyle.Render(titleText)
 
 	// Token input
 	inputStyle := lipgloss.NewStyle().
@@ -216,10 +253,19 @@ func (m *AuthModel) renderTokenInput(width int) string {
 	// Create clickable link using ANSI escape sequences
 	clickableURL := "\033]8;;https://github.com/settings/tokens/new\033\\🔗 https://github.com/settings/tokens/new\033]8;;\033\\"
 
-	instructions := instructionStyle.Render(
-		"Create a token at:\n" +
+	var instructionText string
+	if m.secureMode {
+		instructionText = "Authentication is required to continue.\n\n" +
+			"Create a token at:\n" +
 			clickableURL + "\n\n" +
-			"Required scopes: repo, read:user, read:org")
+			"Required scopes: repo, read:user, read:org"
+	} else {
+		instructionText = "Create a token at:\n" +
+			clickableURL + "\n\n" +
+			"Required scopes: repo, read:user, read:org"
+	}
+	
+	instructions := instructionStyle.Render(instructionText)
 
 	// Error display
 	var errorSection string
@@ -232,11 +278,18 @@ func (m *AuthModel) renderTokenInput(width int) string {
 		errorSection = errorStyle.Render("󰅖 " + m.error.Error())
 	}
 
+	var footerText string
+	if m.secureMode {
+		footerText = "Enter to submit • Ctrl+C or q to quit"
+	} else {
+		footerText = "Enter to submit • Esc to go back"
+	}
+
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Italic(true).
 		Align(lipgloss.Center).
-		Render("Enter to submit • Esc to go back")
+		Render(footerText)
 
 	sections := []string{title, input, instructions}
 	if errorSection != "" {
@@ -313,11 +366,18 @@ func (m *AuthModel) renderError(width int) string {
 
 	errorMsg := errorStyle.Render(m.error.Error())
 
+	var footerText string
+	if m.secureMode {
+		footerText = "Enter to try again • Ctrl+C or q to quit"
+	} else {
+		footerText = "Enter to try again • Esc to go back"
+	}
+
 	footer := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Italic(true).
 		Align(lipgloss.Center).
-		Render("Enter to try again • Esc to go back")
+		Render(footerText)
 
 	return lipgloss.JoinVertical(lipgloss.Center, title, errorMsg, footer)
 }
