@@ -88,7 +88,7 @@ brews:
     homepage: https://github.com/lvcasx1/quikgit
     description: "A GitHub repository manager with terminal user interface (TUI)"
     license: MIT
-    skip_upload: true  # Change to 'auto' when repo is ready
+    skip_upload: auto
     dependencies:
       - name: git
     test: |
@@ -118,7 +118,7 @@ scoops:
     homepage: https://github.com/lvcasx1/quikgit
     description: A GitHub repository manager with terminal user interface (TUI)
     license: MIT
-    skip_upload: true  # Change to 'auto' when repo is ready
+    skip_upload: auto
 
 # nFPM - DEB and RPM packages
 nfpms:
@@ -175,7 +175,7 @@ aurs:
     license: MIT
     private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
     git_url: 'ssh://aur@aur.archlinux.org/quikgit-bin.git'
-    skip_upload: true  # Change to 'auto' when AUR SSH key is configured
+    skip_upload: auto
     depends:
       - git
     package: |-
