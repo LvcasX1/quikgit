@@ -10,8 +10,13 @@ import (
 	"github.com/lvcasx1/quikgit/pkg/config"
 )
 
+var (
+	version = "dev"      // Injected by goreleaser
+	commit  = "none"     // Injected by goreleaser
+	date    = "unknown"  // Injected by goreleaser
+)
+
 const (
-	version = "1.0.1"
 	appName = "QuikGit"
 )
 

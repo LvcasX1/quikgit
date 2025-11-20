@@ -1,324 +1,247 @@
 # GoReleaser configuration for QuikGit
+# Documentation: https://goreleaser.com
+
 version: 2
 
-# Project metadata
 project_name: quikgit
 
-# Environment variables to set for the build
-env:
-  - GO111MODULE=on
-  - CGO_ENABLED=0
-
-# Git settings
-git:
-  tag_sort: -version:refname
-
-# Before hooks - run before the release starts
 before:
   hooks:
     - go mod tidy
-    - go mod download
-    - go generate ./...
+    - go test ./...
 
-# Build configuration
 builds:
   - id: quikgit
     main: ./cmd/quikgit
     binary: quikgit
-    
-    # Build flags
-    flags:
-      - -trimpath
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
     ldflags:
       - -s -w
       - -X main.version={{.Version}}
       - -X main.commit={{.Commit}}
       - -X main.date={{.Date}}
-      - -X main.builtBy=goreleaser
-    
-    # Target platforms (same as existing build.sh and Makefile)
-    goos:
-      - linux
-      - darwin
-      - windows
-    
-    goarch:
-      - amd64
-      - arm64
-    
-    # Environment variables for each build
-    env:
-      - CGO_ENABLED=0
 
-# Archive configuration
 archives:
-  - id: quikgit-archive
-    # Archive name template
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    
-    # Files to include in archives
+  - id: default
+    formats: ['tar.gz']
+    format_overrides:
+      - goos: windows
+        formats: ['zip']
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     files:
       - LICENSE
       - README.md
       - AUTHENTICATION_SETUP.md
-    
-    # Archive format based on OS
-    format: tar.gz
-    format_overrides:
-      - goos: windows
-        format: zip
-    
-    wrap_in_directory: true
 
-# Checksums
 checksum:
-  name_template: "checksums.sha256"
+  name_template: 'checksums.txt'
   algorithm: sha256
 
-# Snapshots (for development builds)
-snapshot:
-  version_template: "{{ incpatch .Version }}-next"
-
-# Changelog
 changelog:
   sort: asc
   use: github
   filters:
     exclude:
-      - "^docs:"
-      - "^test:"
-      - "^chore:"
-      - "merge conflict"
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
       - Merge pull request
-      - Merge remote-tracking branch
       - Merge branch
   groups:
-    - title: "New Features"
+    - title: 'Features'
       regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
       order: 0
-    - title: "Bug fixes"
+    - title: 'Bug fixes'
       regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
       order: 1
-    - title: "Performance improvements"
-      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
-      order: 2
-    - title: "Refactors"
-      regexp: '^.*?refactor(\([[:word:]]+\))??!?:.+$'
-      order: 3
-    - title: "Documentation"
+    - title: 'Documentation'
       regexp: '^.*?docs(\([[:word:]]+\))??!?:.+$'
-      order: 4
-    - title: "Other work"
+      order: 2
+    - title: 'Other changes'
       order: 999
 
-# Release configuration
-release:
-  github:
-    owner: lvcasx1
-    name: quikgit
-  
-  # Release name template
-  name_template: "QuikGit v{{ .Version }}"
-  
-  # Release notes
-  header: |
-    ## QuikGit v{{ .Version }}
-    
-    A GitHub repository manager with terminal user interface (TUI) for cloning, searching, and managing repositories.
-    
-    ### Installation
-    
-    #### macOS (Homebrew)
-    ```bash
-    brew tap lvcasx1/tap
-    brew install quikgit
-    ```
-    
-    #### Arch Linux (AUR)  
-    ```bash
-    yay -S quikgit
-    ```
-    
-    #### Manual Installation
-    Download the appropriate binary for your platform from the release assets below.
-  
-  footer: |
-    ## Usage
-    ```bash
-    quikgit --help
-    ```
-    
-    ## Supported Languages & Frameworks
-    - Go, Node.js, Python, Ruby, Rust
-    - Java, C++, C#, Swift, PHP, Dart
-    - And more with automatic dependency detection!
-    
-    **Full Changelog**: https://github.com/lvcasx1/quikgit/compare/{{ .PreviousTag }}...{{ .Tag }}
-
-# Homebrew formula
+# Homebrew
 brews:
-  - name: quikgit
-    repository:
+  - repository:
       owner: lvcasx1
       name: homebrew-tap
-    
-    # Use specific archive ID for Homebrew
-    ids:
-      - quikgit-archive
-    
-    # Homebrew formula metadata
-    description: "GitHub repository manager with terminal user interface"
-    homepage: "https://github.com/lvcasx1/quikgit"
-    license: "MIT"
-    
-    # Dependencies
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/lvcasx1/quikgit
+    description: "A GitHub repository manager with terminal user interface (TUI)"
+    license: MIT
+    skip_upload: auto
     dependencies:
       - name: git
-        type: required
-    
-    # Installation
-    install: |
-      bin.install "quikgit"
-    
-    # Test
     test: |
       system "#{bin}/quikgit", "--version"
+    install: |
+      bin.install "quikgit"
+    caveats: |
+      To get started with QuikGit:
 
-# Linux package management (DEB, RPM, AUR)
-nfpms:
-  - id: quikgit-packages
-    package_name: quikgit
-    vendor: lvcasx1
+        1. Authenticate with GitHub:
+           quikgit
+
+        2. For QR code authentication, set up GitHub OAuth App:
+           See: https://github.com/lvcasx1/quikgit/blob/main/AUTHENTICATION_SETUP.md
+
+        3. Alternatively, use a personal access token via environment variable:
+           export GITHUB_TOKEN=your_token_here
+
+# Scoop (Windows)
+scoops:
+  - repository:
+      owner: lvcasx1
+      name: scoop-bucket
+      token: "{{ .Env.SCOOP_GITHUB_TOKEN }}"
+    directory: bucket
     homepage: https://github.com/lvcasx1/quikgit
-    maintainer: lvcasx1 <noreply@github.com>
-    description: "GitHub repository manager with terminal user interface"
+    description: A GitHub repository manager with terminal user interface (TUI)
     license: MIT
-    
-    # Package formats
+    skip_upload: auto
+
+# nFPM - DEB and RPM packages
+nfpms:
+  - id: quikgit
+    package_name: quikgit
+    vendor: LvcasX1
+    homepage: https://github.com/lvcasx1/quikgit
+    maintainer: LvcasX1 <noreply@github.com>
+    description: |
+      A GitHub repository manager with terminal user interface (TUI).
+      QuikGit provides an intuitive way to search, clone, and set up repositories
+      with automatic dependency installation for multiple languages.
+    license: MIT
+
     formats:
-      - deb    # For Debian/Ubuntu (APT)
-      - rpm    # For RHEL/Fedora/SUSE
-    
-    # Dependencies
+      - deb
+      - rpm
+      - apk
+
+    bindir: /usr/bin
+
     dependencies:
       - git
-    
-    # Package metadata
-    section: utils
-    priority: optional
-    
-    # File mappings
-    # Note: GoReleaser automatically includes the main binary
-    # We only need to specify additional files
-    contents:
-      # Include documentation
-      - src: "LICENSE"
-        dst: "/usr/share/doc/{{ .ProjectName }}/LICENSE"
-      - src: "README.md"
-        dst: "/usr/share/doc/{{ .ProjectName }}/README.md"
-      - src: "AUTHENTICATION_SETUP.md"
-        dst: "/usr/share/doc/{{ .ProjectName }}/AUTHENTICATION_SETUP.md"
-    
-    # Scripts (optional)
-    scripts:
-      postinstall: "scripts/postinstall.sh"
-      postremove: "scripts/postremove.sh"
 
-# AUR Publishing (Arch User Repository)
+    contents:
+      - src: ./LICENSE
+        dst: /usr/share/doc/quikgit/LICENSE
+      - src: ./README.md
+        dst: /usr/share/doc/quikgit/README.md
+      - src: ./AUTHENTICATION_SETUP.md
+        dst: /usr/share/doc/quikgit/AUTHENTICATION_SETUP.md
+
+    # DEB-specific
+    deb:
+      lintian_overrides:
+        - statically-linked-binary
+        - changelog-file-missing-in-native-package
+
+    # RPM-specific
+    rpm:
+      group: Applications/Internet
+      compression: lzma
+      summary: GitHub repository manager TUI
+
+# AUR (Arch Linux)
 aurs:
-  - name: quikgit
+  - name: quikgit-bin
     homepage: https://github.com/lvcasx1/quikgit
-    description: "GitHub repository manager with terminal user interface"
+    description: "A GitHub repository manager with terminal user interface (TUI) (binary release)"
     maintainers:
-      - 'lvcasx1 <noreply@github.com>'
+      - 'LvcasX1 <noreply@github.com>'
     license: MIT
-    private_key: '{{ .Env.AUR_SSH_PRIVATE_KEY }}'
-    git_url: 'ssh://aur@aur.archlinux.org/quikgit.git'
+    private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
+    git_url: 'ssh://aur@aur.archlinux.org/quikgit-bin.git'
+    skip_upload: auto
     depends:
       - git
     package: |-
       # bin
       install -Dm755 "./quikgit" "${pkgdir}/usr/bin/quikgit"
+
       # license
       install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/quikgit/LICENSE"
-      # docs
+
+      # documentation
       install -Dm644 "./README.md" "${pkgdir}/usr/share/doc/quikgit/README.md"
+      install -Dm644 "./AUTHENTICATION_SETUP.md" "${pkgdir}/usr/share/doc/quikgit/AUTHENTICATION_SETUP.md"
+    commit_author:
+      name: LvcasX1
+      email: noreply@github.com
 
-# Custom publishers for APT repository
-publishers:
-  - name: aptly-repo
-    # This publishes .deb packages to your own APT repository
-    ids:
-      - quikgit-packages
-    dir: "{{ dir .ArtifactPath }}"
-    cmd: |
-      # Upload DEB packages to your APT repository
-      # You'll need to set up your own APT repo infrastructure
-      echo "Publishing DEB packages to APT repository..."
-      # Example: aptly repo add quikgit {{ .ArtifactName }}
-      # Example: aptly publish update stable
-    env:
-      - APT_REPO_URL={{ .Env.APT_REPO_URL }}
-      - APT_REPO_KEY={{ .Env.APT_REPO_KEY }}
+# Release settings
+release:
+  github:
+    owner: lvcasx1
+    name: quikgit
+  name_template: "Release {{.Version}}"
+  draft: false
+  prerelease: auto
+  mode: append
+  header: |
+    ## QuikGit {{.Version}}
 
-# Universal binaries for macOS (combines amd64 and arm64)
-universal_binaries:
-  - id: quikgit-universal
-    replace: false
-    name_template: "{{ .ProjectName }}"
+    **Installation Options:**
 
-# Docker images
-dockers:
-  - image_templates:
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:latest-amd64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/lvcasx1/quikgit"
-      - "--platform=linux/amd64"
-    
-  - image_templates:
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:{{ .Version }}-arm64"
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:latest-arm64"
-    dockerfile: Dockerfile
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{ .Date }}"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.revision={{ .FullCommit }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/lvcasx1/quikgit"
-      - "--platform=linux/arm64"
-    goarch: arm64
+    ### Package Managers
+    ```bash
+    # Homebrew (macOS/Linux)
+    brew tap lvcasx1/tap
+    brew install quikgit
 
-# Docker manifests (multi-arch images)
-docker_manifests:
-  - name_template: "ghcr.io/lvcasx1/{{ .ProjectName }}:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:{{ .Version }}-amd64"
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:{{ .Version }}-arm64"
-  
-  - name_template: "ghcr.io/lvcasx1/{{ .ProjectName }}:latest"
-    image_templates:
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:latest-amd64"
-      - "ghcr.io/lvcasx1/{{ .ProjectName }}:latest-arm64"
+    # Scoop (Windows)
+    scoop bucket add lvcasx1 https://github.com/lvcasx1/scoop-bucket
+    scoop install quikgit
 
-# Sign artifacts with cosign (optional - uncomment if using cosign)
-# signs:
-#   - cmd: cosign
-#     signature: "${artifact}.sig"
-#     certificate: "${artifact}.pem"
-#     args:
-#       - "sign-blob"
-#       - "--output-signature=${signature}"
-#       - "--output-certificate=${certificate}"
-#       - "${artifact}"
-#       - "--yes"
-#     artifacts: all
+    # AUR (Arch Linux)
+    yay -S quikgit-bin
+
+    # Debian/Ubuntu
+    # Download the .deb file below and install with:
+    sudo dpkg -i quikgit_{{.Version}}_Linux_x86_64.deb
+
+    # Fedora/RHEL/CentOS
+    # Download the .rpm file below and install with:
+    sudo rpm -i quikgit_{{.Version}}_Linux_x86_64.rpm
+    ```
+
+    ### Direct Download
+    Download the appropriate archive for your platform below.
+
+  footer: |
+    **Full Changelog**: https://github.com/lvcasx1/quikgit/blob/main/CHANGELOG.md
+
+    ---
+
+    **Getting Started:**
+    1. Get your GitHub Personal Access Token from https://github.com/settings/tokens
+    2. Run: `quikgit`
+    3. Follow the authentication prompts
+    4. Start searching and cloning repositories!
+
+    **Supported Languages & Frameworks:**
+    Go, Node.js (npm/yarn), Python (pip/pipenv/poetry), Ruby, Rust, Java, C++, C#, Swift, PHP, Dart,
+    Next.js, Vue.js, Angular, Svelte, Nuxt, Gatsby, and more!
+
+# Announce releases
+announce:
+  skip: '{{gt .Patch 0}}'  # Only announce major/minor releases, not patches
