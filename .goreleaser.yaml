@@ -78,6 +78,7 @@ changelog:
       order: 999
 
 # Homebrew
+# To enable: Create lvcasx1/homebrew-tap repo and set HOMEBREW_TAP_GITHUB_TOKEN secret
 brews:
   - repository:
       owner: lvcasx1
@@ -87,7 +88,7 @@ brews:
     homepage: https://github.com/lvcasx1/quikgit
     description: "A GitHub repository manager with terminal user interface (TUI)"
     license: MIT
-    skip_upload: auto
+    skip_upload: true  # Change to 'auto' when repo is ready
     dependencies:
       - name: git
     test: |
@@ -107,6 +108,7 @@ brews:
            export GITHUB_TOKEN=your_token_here
 
 # Scoop (Windows)
+# To enable: Create lvcasx1/scoop-bucket repo and set SCOOP_GITHUB_TOKEN secret
 scoops:
   - repository:
       owner: lvcasx1
@@ -116,7 +118,7 @@ scoops:
     homepage: https://github.com/lvcasx1/quikgit
     description: A GitHub repository manager with terminal user interface (TUI)
     license: MIT
-    skip_upload: auto
+    skip_upload: true  # Change to 'auto' when repo is ready
 
 # nFPM - DEB and RPM packages
 nfpms:
@@ -162,6 +164,8 @@ nfpms:
       summary: GitHub repository manager TUI
 
 # AUR (Arch Linux)
+# To enable: Set up AUR SSH key and set AUR_SSH_PRIVATE_KEY secret
+# See: https://wiki.archlinux.org/title/AUR_submission_guidelines
 aurs:
   - name: quikgit-bin
     homepage: https://github.com/lvcasx1/quikgit
@@ -171,7 +175,7 @@ aurs:
     license: MIT
     private_key: "{{ .Env.AUR_SSH_PRIVATE_KEY }}"
     git_url: 'ssh://aur@aur.archlinux.org/quikgit-bin.git'
-    skip_upload: auto
+    skip_upload: true  # Change to 'auto' when AUR SSH key is configured
     depends:
       - git
     package: |-
