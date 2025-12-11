@@ -127,20 +127,20 @@ func (cm *CloneManager) cloneWorker(ctx context.Context, repo *Repository) {
 	cm.sendProgress(progress)
 
 	cloneOptions := &git.CloneOptions{
-		URL:      repo.CloneURL,
+		URL:      repo.SSHURL, // Default to SSH URL
 		Progress: &progressWriter{repo: repo.FullName, progress: cm.progress},
 	}
 
-	// Prefer HTTPS with token if available, otherwise try SSH
-	if cm.token != "" {
+	// Prefer SSH authentication, fallback to HTTPS with token
+	if auth, err := cm.getSSHAuth(); err == nil && repo.SSHURL != "" {
+		cloneOptions.URL = repo.SSHURL
+		cloneOptions.Auth = auth
+	} else if cm.token != "" {
+		// Fallback to HTTPS with token if SSH is not available
+		cloneOptions.URL = repo.CloneURL
 		cloneOptions.Auth = &http.BasicAuth{
 			Username: "token",
 			Password: cm.token,
-		}
-	} else if cm.sshKey != "" && repo.SSHURL != "" {
-		if auth, err := cm.getSSHAuth(); err == nil {
-			cloneOptions.URL = repo.SSHURL
-			cloneOptions.Auth = auth
 		}
 	}
 

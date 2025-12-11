@@ -56,6 +56,21 @@ var JSFrameworkDetectors = []ProjectType{
 		Description: "Next.js React framework (detected via package.json)",
 	},
 	{
+		Name:     "Vue.js (Yarn Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json", "yarn.lock"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-vue",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Vue.js dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Vue.js framework with Yarn (detected via package.json)",
+	},
+	{
 		Name:     "Vue.js (Package)",
 		Language: "JavaScript",
 		Files:    []string{"package.json"},
@@ -71,6 +86,21 @@ var JSFrameworkDetectors = []ProjectType{
 		Description: "Vue.js framework (detected via package.json)",
 	},
 	{
+		Name:     "Angular (Yarn Package)",
+		Language: "TypeScript",
+		Files:    []string{"package.json", "yarn.lock"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-angular",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install Angular dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "Angular framework with Yarn (detected via package.json)",
+	},
+	{
 		Name:     "Angular (Package)",
 		Language: "TypeScript",
 		Files:    []string{"package.json"},
@@ -84,6 +114,21 @@ var JSFrameworkDetectors = []ProjectType{
 			},
 		},
 		Description: "Angular framework (detected via package.json)",
+	},
+	{
+		Name:     "React (Yarn Package)",
+		Language: "JavaScript",
+		Files:    []string{"package.json", "yarn.lock"},
+		Commands: []Command{
+			{
+				Name:        "yarn-install-react",
+				Command:     "yarn",
+				Args:        []string{"install"},
+				Description: "Install React dependencies via Yarn",
+				Required:    true,
+			},
+		},
+		Description: "React framework with Yarn (detected via package.json)",
 	},
 	{
 		Name:     "React (Package)",
@@ -621,18 +666,29 @@ func (d *Detector) matchesJSFramework(project ProjectType) bool {
 		return false
 	}
 
+	// Determine if this is a yarn or npm project
+	hasYarnLock := d.hasMatchingFiles("yarn.lock")
+
 	// Check for specific framework dependencies
 	switch project.Name {
-	case "Next.js (Yarn Package)", "Next.js (Package)":
-		return d.hasPackageDependency("next")
+	case "Next.js (Yarn Package)":
+		return hasYarnLock && d.hasPackageDependency("next")
+	case "Next.js (Package)":
+		return !hasYarnLock && d.hasPackageDependency("next")
+	case "Vue.js (Yarn Package)":
+		return hasYarnLock && d.hasPackageDependency("vue", "@vue/cli", "nuxt")
 	case "Vue.js (Package)":
-		return d.hasPackageDependency("vue", "@vue/cli", "nuxt")
+		return !hasYarnLock && d.hasPackageDependency("vue", "@vue/cli", "nuxt")
+	case "Angular (Yarn Package)":
+		return hasYarnLock && d.hasPackageDependency("@angular/core", "@angular/cli")
 	case "Angular (Package)":
-		return d.hasPackageDependency("@angular/core", "@angular/cli")
+		return !hasYarnLock && d.hasPackageDependency("@angular/core", "@angular/cli")
+	case "React (Yarn Package)":
+		return hasYarnLock && d.hasPackageDependency("react") && !d.hasPackageDependency("next", "gatsby", "@remix-run/react")
 	case "React (Package)":
-		return d.hasPackageDependency("react") && !d.hasPackageDependency("next", "gatsby", "@remix-run/react")
+		return !hasYarnLock && d.hasPackageDependency("react") && !d.hasPackageDependency("next", "gatsby", "@remix-run/react")
 	}
-	
+
 	return false
 }
 
@@ -649,42 +705,45 @@ func (d *Detector) DetectPrimaryProject() (*ProjectType, error) {
 	// Priority order for conflicting project types (package.json detection gets highest priority)
 	priorities := map[string]int{
 		// Package.json based detection (highest priority)
-		"Next.js (Yarn Package)": 31,
-		"Next.js (Package)":      30,
-		"Angular (Package)":      29,
-		"Vue.js (Package)":       28,
-		"React (Package)":        27,
-		
+		"Next.js (Yarn Package)":    35,
+		"Next.js (Package)":         34,
+		"Angular (Yarn Package)":    33,
+		"Angular (Package)":         32,
+		"Vue.js (Yarn Package)":     31,
+		"Vue.js (Package)":          30,
+		"React (Yarn Package)":      29,
+		"React (Package)":           28,
+
 		// File-based framework detection
 		"Next.js (Yarn)":     25,
 		"Next.js":            24,
-		"Nuxt.js":           23,
-		"Gatsby":            22,
-		"Remix":             21,
-		"Angular (Yarn)":    20,
-		"Angular":           19,
-		"Vue.js (Yarn)":     18,
-		"Vue.js":            17,
-		"SvelteKit":         16,
-		"Svelte":            15,
-		"Astro":             14,
-		"Vite":              13,
-		
+		"Nuxt.js":            23,
+		"Gatsby":             22,
+		"Remix":              21,
+		"Angular (Yarn)":     20,
+		"Angular":            19,
+		"Vue.js (Yarn)":      18,
+		"Vue.js":             17,
+		"SvelteKit":          16,
+		"Svelte":             15,
+		"Astro":              14,
+		"Vite":               13,
+
 		// Generic Node.js (lower priority than frameworks)
-		"Node.js (yarn)":    12,
-		"Node.js (npm)":     11,
-		
+		"Node.js (yarn)":     12,
+		"Node.js (npm)":      11,
+
 		// Other languages
-		"Python (Poetry)":   10,
-		"Python (Pipenv)":   9,
-		"Python (pip)":      8,
-		"Go":                7,
-		"Rust":              6,
-		"Java (Gradle)":     5,
-		"Java (Maven)":      4,
-		"Ruby (Bundler)":    3,
-		"Dart (Flutter)":    2,
-		"Swift":             1,
+		"Python (Poetry)":    10,
+		"Python (Pipenv)":    9,
+		"Python (pip)":       8,
+		"Go":                 7,
+		"Rust":               6,
+		"Java (Gradle)":      5,
+		"Java (Maven)":       4,
+		"Ruby (Bundler)":     3,
+		"Dart (Flutter)":     2,
+		"Swift":              1,
 	}
 
 	var best *ProjectType
